@@ -31,7 +31,7 @@ Summarize the diff into a structured context:
 - User-facing vs internal changes
 - Any risks or breaking changes mentioned by the user
 
-Then **spawn a pr-writer agent** (runs at haiku) with:
+Then **spawn a `core:pr-writer` agent** with:
 - The context summary
 - Save path: `docs/pr/PR-<ISO-timestamp>-<kebab-slug>.md` (create `docs/pr/` if needed)
 

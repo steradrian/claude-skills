@@ -15,13 +15,13 @@
 
 Run the project's linter on changed files only:
 
-1. Detect package manager from lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb`/`bun.lock` → bun, else → npx)
+1. Detect package manager from lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb`/`bun.lock` → bun, `package-lock.json` → npm); `<pm>` below is the detected one
 2. Read `package.json` scripts to find lint command
 3. Detect linter: `biome.json`/`biome.jsonc` → Biome; `.eslintrc*`/`eslint.config.*` → ESLint; both → run both
 4. Run on changed files only:
    ```bash
-   pnpm biome check --no-errors-on-unmatched <changed files>
-   pnpm eslint <changed files>
+   <pm> exec biome check --no-errors-on-unmatched <changed files>
+   <pm> exec eslint <changed files>
    ```
 5. Report results. Clean exit → `✅ No issues`
 

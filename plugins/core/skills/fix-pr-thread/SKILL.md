@@ -7,8 +7,9 @@ description: >
   scope-bounded edit, returns a structured result. Same-file threads are
   processed sequentially by ONE agent; different files run in parallel ONLY
   at scale (≥3 paths). No orchestrator phase, no "fix all occurrences," no
-  Context7 lookup, no background dispatch by default. Designed to eliminate
-  the failure modes documented in resolve-pr-comments AUDIT.md.
+  external doc lookup, no background dispatch by default. Designed to eliminate
+  the failure modes listed under "Failure mode coverage" below. Internal —
+  invoked by resolve-pr-comments, not typed by the user.
 disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 ---
@@ -22,9 +23,9 @@ This skill is **internal** — it is invoked by `resolve-pr-comments` with a
 structured input, not directly by the user. It does not commit, push, reply,
 or resolve threads. Those steps belong to the caller.
 
-## ⚠️ If you're reading this because the user typed `/fix-pr-thread` directly
+## ⚠️ If you're reading this because the user typed `/core:fix-pr-thread` directly
 
-The user almost certainly meant `/resolve-pr-comments` — the outer skill that
+The user almost certainly meant `/core:resolve-pr-comments` — the outer skill that
 owns the FULL flow (fetch threads → fix per path → verify → commit → push →
 reply → resolve → wait → re-check). Routing to the outer skill is correct.
 
@@ -55,30 +56,30 @@ After applying fixes for every thread on every path:
    the status (`fixed` / `skipped` / `dismissed`). Cite the commit SHA on
    `fixed` replies.
 
-**7. ScheduleWakeup 15 min (`delaySeconds: 900`).** Cursor Bugbot regularly
-   lands new findings 8–15 min after a commit. Shorter waits silently miss
-   its second-pass review. This is not optional — it's the verification
+**7. Schedule the next round: `/loop 15m /core:resolve-pr-comments <PR_URL>`**
+   (skip if this round was itself a `/loop` firing). Review bots regularly
+   land new findings 8–15 min after a commit. Shorter waits silently miss
+   the second-pass review. This is not optional — it's the verification
    gate that makes the fix-and-reply-and-resolve dance honest.
 
-**8. On wakeup, RE-FETCH unresolved threads.** Treat the PR as if you're
-   approaching it fresh:
+**8. On the next firing, RE-FETCH unresolved threads.** Treat the PR as if
+   you're approaching it fresh:
    - If new unresolved threads exist → start a new round (back to step 1).
      A fix you applied in round N may have introduced the round-(N+1)
      finding. This is normal and expected.
-   - If zero unresolved threads → this is a "quiet round." `ScheduleWakeup`
-     once more at the same 15-min cadence to confirm.
+   - If zero unresolved threads → this is a "quiet round." Let the loop
+     fire once more at the same 15-min cadence to confirm.
 
 **9. Exit only after TWO CONSECUTIVE QUIET ROUNDS.** A single zero-thread
-   tick is inconclusive — Bugbot's review is async and the second-pass
+   tick is inconclusive — bot review is async and the second pass
    often arrives within the same 15-min window. Two consecutive quiet
    rounds means the bot has had two passes to flag follow-ups and stayed
-   silent. Only then is the PR genuinely clean.
+   silent. Only then is the PR genuinely clean; tell the user to stop the loop.
 
 If you commit + push + reply + resolve and then declare the PR done without
 this re-check loop, you are **misleading the user about the state of the
-PR**. The bot WILL come back with follow-ups on roughly 1 in 3 commits —
-empirically observed during the May 2026 bulk-translate session, where
-round 2 caught a hole introduced by round 1's fix.
+PR**. Bots come back with follow-ups on roughly 1 in 3 commits — a later
+round regularly catches a hole introduced by an earlier round's fix.
 
 ## Input contract
 
@@ -210,8 +211,9 @@ This skill does NONE of that.
 
 ## Cross-path parallelism (caller's concern)
 
-The caller (`resolve-pr-comments`) delegates the inline-vs-parallel decision
-to `superpowers:dispatching-parallel-agents`. Whatever the decision, this
+The caller (`resolve-pr-comments`) decides inline vs parallel: fewer than 3
+path groups run inline and sequentially; 3 or more get one foreground agent
+per path, each with a self-contained brief. Whatever the decision, this
 invariant holds:
 
 **Two agents NEVER edit the same file.** Same-file threads are always grouped
@@ -225,8 +227,8 @@ unit of parallelism (path) equals the unit of edit safety (file).
 - ❌ Grep for similar patterns and fix all occurrences (silently widens scope; reviewer didn't ask)
 - ❌ Edit files outside the thread's `path` to make a fix work (skip instead)
 - ❌ Background dispatch (silent stuck agents have no recovery)
-- ❌ Use haiku for "simple" bugs (misclassification → silent wrong fix; just use sonnet)
-- ❌ Context7 lookups (external dependency, brittle, rarely needed for code that's already in front of you)
+- ❌ Downgrade the agent's model for "simple" bugs (misclassification → silent wrong fix; no tier classification, every thread gets the same agent)
+- ❌ External documentation lookups (brittle dependency, rarely needed for code that's already in front of you)
 - ❌ Ask the user mid-fix (skip and report; the caller surfaces the question)
 - ❌ Commit, push, reply, or resolve threads (those are the caller's steps; this skill only edits)
 
@@ -295,19 +297,19 @@ unit of parallelism (path) equals the unit of edit safety (file).
 
 ## Failure mode coverage
 
-Each known failure mode of `fix-after-review`, addressed:
+Each known failure mode of the old parallel-per-bug fixer (the pattern `fix-after-review` used before it adopted this protocol), addressed:
 
-| `fix-after-review` failure mode | `fix-pr-thread` mitigation |
+| Failure mode | `fix-pr-thread` mitigation |
 |---|---|
 | Same-file parallel writes (bug-level dispatch) | Group by path; same-file threads → one agent → sequential |
 | Orchestrator rolls back after agent reports fixed | No orchestrator phase. Agent edits are final. |
 | "Fix all occurrences" widens diff | Explicit prohibition; edit only what was flagged |
 | Stale-read race within an agent | Edit tool re-verifies `old_string` per call (built-in) |
 | Background mode hides stuck agents | Foreground only |
-| Model mismatch (haiku silently wrong) | Sonnet for everything; no tier classification |
+| Model mismatch (cheaper model silently wrong) | One agent definition for everything; no tier classification |
 | DISMISSED unspecified | First-class status: `fixed` / `skipped` / `dismissed` |
 | Only first comment fetched | Caller fetches `comments(first: 100)` (GitHub's per-page max); protocol reads all |
-| Context7 brittle dependency | No external lookups |
+| External doc lookups as a brittle dependency | No external lookups |
 
 ## Integration with `resolve-pr-comments`
 
@@ -330,5 +332,5 @@ The caller never asks this skill to commit, reply, or resolve. Status
 mapping at the caller:
 
 - `fixed`   → reply "Fixed in <SHA>. ..." then resolve
-- `skipped` → reply with a specific caveman reason (out-of-scope, product decision, pre-existing, accepted nit, etc.) → resolve
+- `skipped` → reply with a specific terse reason (out-of-scope, product decision, pre-existing, accepted nit, etc.) → resolve
 - `dismissed` → reply "Dismissed. ..." then resolve

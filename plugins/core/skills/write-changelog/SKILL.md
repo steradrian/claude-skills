@@ -21,7 +21,7 @@ git log -5 --oneline
 
 ## Step 2: Delegate to Agent
 
-Summarize the diff into user-facing vs internal changes, then **spawn a changelog-writer agent** (runs at haiku) with:
+Summarize the diff into user-facing vs internal changes, then **spawn a `core:changelog-writer` agent** with:
 - The list of user-facing changes
 - Note: the agent will read `CHANGELOG.md` itself to match existing structure
 

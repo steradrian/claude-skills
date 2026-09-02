@@ -1,7 +1,8 @@
 ---
 name: changelog-writer
 model: haiku
-description: Use this agent to update CHANGELOG.md with user-facing changes. Spawned by build commands during the documentation phase. Filters out internal changes and writes imperative-mood entries.
+tools: Read, Grep, Glob, Bash, Edit, Write
+description: Use this agent to update CHANGELOG.md with user-facing changes. Triggers on phrases like "update the changelog", "add a changelog entry", "write the release notes", "changelog for this change". Spawned by `/core:build*` and `/core:write-changelog` during the documentation phase. Filters out internal changes and writes imperative-mood entries.
 ---
 
 You are updating a project's CHANGELOG.md with user-facing changes.

@@ -1,7 +1,8 @@
 ---
 name: ticket-writer
 model: sonnet
-description: Use this agent to write end-of-work documentation tickets. Spawned by build commands during the documentation phase. Documents what was actually built, decisions made, deviations from plan, and known follow-ups.
+tools: Read, Grep, Glob, Bash, Edit, Write
+description: Use this agent to write end-of-work documentation tickets. Triggers on phrases like "write the ticket for this work", "document what we built", "create a ticket", "write up this session". Spawned by `/core:build*` and `/core:create-ticket` during the documentation phase. Documents what was actually built, decisions made, deviations from plan, and known follow-ups.
 ---
 
 You are writing an end-of-work documentation ticket. **Primary reader: a non-technical Product Owner or stakeholder.** Secondary reader: an engineer who needs the technical details.

@@ -1,10 +1,11 @@
 ---
 name: bug-bash-reporter
 model: sonnet
-description: Use this agent at the end of a `/bug-bash` run to write the per-bug audit-trail report. Spawned by the `/bug-bash` skill alongside `pr-writer` and `changelog-writer`. Documents what each bug was, how it was reproduced, root cause, the fix, and the re-verification evidence — one section per bug.
+tools: Read, Grep, Glob, Bash, Edit, Write
+description: Use this agent at the end of a `/core:bug-bash` run to write the per-bug audit-trail report. Triggers on phrases like "write the bug bash report", "document the bugs we fixed", "bug audit trail", "summarize the bug bash". Spawned by the `/core:bug-bash` skill alongside `core:pr-writer` and `core:changelog-writer`. Documents what each bug was, how it was reproduced, root cause, the fix, and the re-verification evidence — one section per bug.
 ---
 
-You are writing the per-bug audit-trail report for a completed `/bug-bash`
+You are writing the per-bug audit-trail report for a completed `/core:bug-bash`
 run. The host has already reproduced, fixed, and re-verified each bug.
 Your job is to assemble the evidence into a single readable file.
 
@@ -110,7 +111,7 @@ What's needed to retry:
 work out of scope>
 
 **Suggested next step**
-<e.g., "spawn /debug-investigate", "open spec ticket", "needs upstream
+<e.g., "spawn /core:debug-investigate", "open spec ticket", "needs upstream
 maintainer">
 
 ---
@@ -134,7 +135,7 @@ maintainer">
   cross-reference: in Bug 5's Fix section, write "Same fix as Bug 1 —
   see above."
 - **No machine-only markup.** This file is intended to be readable on
-  GitHub, in a Linear comment, or in a Notion paste.
+  GitHub or pasted into the issue tracker.
 - **Keep the summary honest.** If 3 of 5 bugs were CNR, say so. The
   point is the audit trail, not selling the run as a success.
 

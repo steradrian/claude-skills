@@ -1,6 +1,6 @@
 ---
 name: setup-claude
-description: Configure Claude Code for a new project with CLAUDE.md, rules, settings, and gitignore
+description: Configure Claude Code for a new project with CLAUDE.md, rules, settings, and gitignore. Use when asked to "set up claude for this project", "configure claude code", "init claude config" or "write a CLAUDE.md".
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
@@ -138,9 +138,8 @@ CLAUDE.local.md
 Verify these global files exist. If they don't, inform the user they should set up global config. Do NOT create or modify global files without explicit permission:
 
 - `~/.claude/CLAUDE.md` — personal preferences (communication style, tool preferences, development discipline)
-- `~/.claude/settings.json` — permissions, hooks (pre-bash-guard, post-edit-quality, protected file guard, notification), MCP servers
-- `~/.claude/hooks/pre-bash-guard.sh` — blocks: push on main/develop, force-push, `rm -rf`, `sudo`, piped curl/wget, deletion of critical project files
-- `~/.claude/hooks/post-edit-quality.sh` — auto-runs linter after every edit
+- `~/.claude/settings.json` — permissions, hooks, MCP servers
+- Any hook script paths referenced from `settings.json` — each referenced file must exist and be executable
 
 If any are missing, tell the user which ones and offer to create them.
 

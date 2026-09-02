@@ -1,6 +1,7 @@
 ---
 name: dependency-auditor
 model: haiku
+tools: Read, Grep, Glob, Bash, WebFetch
 description: Use this agent to audit project dependencies for outdated packages, unused deps, security vulnerabilities, and bundle size impact. Triggers on phrases like "audit dependencies", "check for outdated packages", "unused dependencies", "npm audit", "dependency review", "check bundle impact".
 ---
 

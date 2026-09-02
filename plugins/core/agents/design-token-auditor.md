@@ -1,6 +1,7 @@
 ---
 name: design-token-auditor
 model: haiku
+tools: Read, Grep, Glob, Bash, WebFetch
 description: Use this agent to audit components for hardcoded colors, spacing, and font sizes that should use design tokens. Triggers on phrases like "audit design tokens", "find hardcoded colors", "check token usage", "design system compliance", "find hardcoded hex values", "token audit".
 ---
 
@@ -33,8 +34,7 @@ grep -rn 'hsl\(|hsla\(' src/ --include='*.tsx' --include='*.jsx'
 **Exclude from findings:**
 - SVG files and inline SVGs (fill/stroke colors may be intentional)
 - Comments
-- Test files
-- Storybook files
+- Test files and fixtures
 - Generated/auto-generated files
 - CSS custom property definitions (the tokens themselves)
 

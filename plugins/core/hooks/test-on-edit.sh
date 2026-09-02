@@ -1,38 +1,27 @@
 #!/bin/bash
-# PostToolUse hook — run co-located test file after editing a .ts/.tsx file.
-# Only fires if a test file exists alongside the edited file or in __tests__/.
-# Produces zero output when no test file is found (no context pollution).
+# PostToolUse(Edit|Write|MultiEdit) — run the tests related to an edited
+# .ts/.tsx file. Runs in the background (asyncRewake): silent when there are
+# no related tests or they pass; exit 2 with the failure summary wakes Claude.
 
-FILE=$(echo "$CLAUDE_TOOL_INPUT" | python3 -c \
-  'import sys,json; d=json.load(sys.stdin); print(d.get("file_path",""))' \
-  2>/dev/null)
+set -u
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+read_hook_input
+FILE=$(hook_field '.tool_input.file_path')
+case "$FILE" in *.ts|*.tsx) ;; *) exit 0 ;; esac
 
-case "$FILE" in
-  *.ts|*.tsx)
-    BASENAME=$(basename "$FILE")
-    BASENAME="${BASENAME%.tsx}"
-    BASENAME="${BASENAME%.ts}"
-    DIR=$(dirname "$FILE")
+ROOT="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+cd "$ROOT" || exit 0
+[ -f node_modules/.bin/vitest ] || exit 0
 
-    TEST=""
-    for CANDIDATE in \
-      "${DIR}/${BASENAME}.test.ts" \
-      "${DIR}/${BASENAME}.test.tsx" \
-      "${DIR}/__tests__/${BASENAME}.test.ts" \
-      "${DIR}/__tests__/${BASENAME}.test.tsx" \
-      "${DIR}/${BASENAME}.spec.ts" \
-      "${DIR}/${BASENAME}.spec.tsx"
-    do
-      if [ -f "$CANDIDATE" ]; then
-        TEST="$CANDIDATE"
-        break
-      fi
-    done
+# `vitest related` resolves importers of the edited file, so editing a
+# component runs its tests and editing a test runs that test. Exits 0 when
+# nothing is related.
+OUT=$($(pkg_exec) vitest related "$FILE" --run --reporter=dot --passWithNoTests 2>&1)
+STATUS=$?
+[ $STATUS -eq 0 ] && exit 0
 
-    if [ -n "$TEST" ]; then
-      VITEST="node_modules/.bin/vitest"
-      [ -f "$VITEST" ] || VITEST="npx --no-install vitest"
-      (timeout 10 $VITEST run "$TEST" --reporter=dot 2>&1 || true) | tail -8
-    fi
-    ;;
-esac
+{
+  echo "[test-on-edit] Tests related to $FILE failed:"
+  printf '%s\n' "$OUT" | grep -vE '^\s*$' | tail -25
+} >&2
+exit 2

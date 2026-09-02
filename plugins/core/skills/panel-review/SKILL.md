@@ -1,12 +1,12 @@
 ---
 name: panel-review
 description: >
-  Adversarial pre-PR review with a panel of 8-10 specialized agents
+  Adversarial pre-PR review with a panel of specialized agents
   running in parallel against the current diff. NO inter-batch dedup,
   NO skepticism filter — every finding surfaces, the human triages.
   Built for bugbot-style "question everything" coverage. Token-cost
-  managed via diff-scoped reads, prompt caching, model right-sizing,
-  and specialist gating per file type. Triggered by `/panel-review`
+  managed via diff-scoped reads, prompt caching, no model escalation,
+  and specialist gating per file type. Triggered by `/core:panel-review`
   or natural language: "panel review this PR", "bugbot this", "every
   agent reviews these changes", "adversarial PR review".
 disable-model-invocation: true
@@ -15,18 +15,18 @@ allowed-tools: Read, Glob, Grep, Bash, Agent, AskUserQuestion
 
 # Panel Review
 
-The `/review` skill filters aggressively (two-gate, skepticism pass,
+The `/core:review` skill filters aggressively (two-gate, skepticism pass,
 deduplication, architectural-coherence merge). Great when you want
 high-precision blocking findings before merge.
 
 This skill is the opposite. It runs a **panel of specialists**
 in parallel — security, performance, accessibility, types, data
-flow, blast radius, root cause, devil's advocate — with NO
+flow, blast radius, root cause, adversarial — with NO
 deduplication or filtering between them. Every plausible finding
 surfaces. The human triages.
 
 Use when you want maximum recall on a high-stakes change. Skip for
-trivial diffs (use `/review` or just spot-check).
+trivial diffs (use `/core:review` or just spot-check).
 
 ## When to use
 
@@ -38,7 +38,7 @@ trivial diffs (use `/review` or just spot-check).
 
 ## When NOT to use
 
-- Trivial diffs (<100 LOC). Use `/review`.
+- Trivial diffs (<100 LOC). Use `/core:review`.
 - Pure documentation / typo / dependency-bump PRs.
 - When you only want one angle (a11y / security / perf). Invoke the specific auditor directly.
 
@@ -48,6 +48,24 @@ trivial diffs (use `/review` or just spot-check).
 2. **Diff-scoped reads only.** No agent reads the full codebase. Every agent receives the shared bundle the orchestrator built and grep-traces from there.
 3. **Token-cost discipline.** All six levers below are non-optional. Bypassing any of them is how this skill becomes a budget hole.
 4. **Human triages, not the panel.** Severity comes from the agents; the decision to fix / defer / ship comes from the user.
+
+## The panel
+
+All agents are plugin agents, invoked as `core:<name>`; their definitions live at `${CLAUDE_PLUGIN_ROOT}/agents/<name>.md`.
+
+| Agent | Role on the panel | Gating |
+|---|---|---|
+| `core:security-auditor` | auth, injection, secrets, server boundary | always |
+| `core:pr-reviewer` | general correctness plus the adversarial "what would break this" pass | always |
+| `core:fix-reviewer` | root-cause vs symptom: does the change fix the cause or paper over it | always |
+| `core:blast-radius-reviewer` | cross-file tracing, callers, schema drift | always |
+| `core:perf-reviewer` | rendering, bundle, waterfalls | `.tsx`/`.jsx`/`.css` |
+| `core:accessibility-auditor` | WCAG checklist | `.tsx`/`.jsx`/`.css` |
+| `core:design-token-auditor` | token usage, arbitrary values | `.tsx`/`.jsx`/`.css` |
+| `core:dependency-auditor` | new or changed deps | `package.json` deps changed |
+| `core:i18n-auditor` | hardcoded strings, locale files | locale files / new strings |
+| `core:seo-auditor` | meta, structured data, sitemap, robots | `<meta>` / structured data / sitemap / `robots.txt` |
+| `core:bug-investigator` | escalation only (Step 5) | on request |
 
 ## Token-cost levers (all six are mandatory)
 
@@ -62,47 +80,33 @@ Each agent receives only:
 NO `find /` calls. NO repo-wide reads. Agents grep within the bundle.
 
 ### Lever 2 — Shared prompt-cached bundle
-The orchestrator builds the bundle ONCE and writes it as a single text payload. Every agent invocation prepends the same bundle, so the Anthropic prompt cache hits across all parallel calls. Cache TTL: 1h. This is the single biggest cost saver (~9-10× reduction vs naive).
+The orchestrator builds the bundle ONCE and writes it as a single text block. Every agent invocation prepends the same bundle, so the prompt cache hits across all parallel calls. Cache TTL: 1h. This is the single biggest cost saver (~9-10× reduction vs naive).
 
 To make caching work:
 - Bundle content goes at the START of each agent's prompt (verbatim, same bytes)
 - Agent-specific instructions come AFTER the bundle
 - Don't dynamic-inject branch names or timestamps inside the cached prefix
 
-### Lever 3 — Model right-sizing
-| Agent | Model | Rationale |
-|---|---|---|
-| security-auditor | sonnet | sharp reasoning, OWASP patterns |
-| devil-advocate | sonnet | adversarial chains |
-| root-cause-reviewer | sonnet | causal inference |
-| blast-radius-reviewer | sonnet | cross-file tracing |
-| bug-investigator | sonnet | escalation only |
-| performance-auditor | haiku | mostly pattern matching |
-| accessibility-auditor | haiku | WCAG checklist |
-| design-token-auditor | haiku | regex-shaped |
-| i18n-auditor | haiku | string presence |
-| seo-auditor | haiku | meta tag checklist |
-| dependency-auditor | haiku | package.json diff |
-
-NEVER default to Opus across the panel. That's the #1 way to burn money.
+### Lever 3 — No model escalation
+Each agent's model is set in its own definition file. Do not pass a `model` override to any panel agent, and never escalate the whole panel to the largest available model. That is the #1 way to burn money.
 
 ### Lever 4 — Specialist gating
 Skip agents whose domain isn't in the diff. Decision table from changed-file patterns:
 
 | Pattern in diff | Run these agents |
 |---|---|
-| any `.ts`/`.tsx`/`.js` | security, devil-advocate, root-cause, blast-radius, pr-reviewer |
-| `.tsx`/`.jsx`/`.css` | + accessibility, design-token, performance |
+| any `.ts`/`.tsx`/`.js` | security-auditor, pr-reviewer, fix-reviewer, blast-radius-reviewer |
+| `.tsx`/`.jsx`/`.css` | + accessibility-auditor, design-token-auditor, perf-reviewer |
 | new `package.json` deps | + dependency-auditor |
 | locale files / new strings | + i18n-auditor |
-| `<meta>` / structured data / `next-sitemap` / `robots.txt` | + seo-auditor |
-| migration / schema files | + blast-radius gets a special "schema-drift" prompt |
-| Server Components / Server Actions | + security gets "server-boundary" prompt |
+| `<meta>` / structured data / sitemap / `robots.txt` | + seo-auditor |
+| migration / schema files | + blast-radius-reviewer gets a special "schema-drift" prompt |
+| Server Components / Server Actions | + security-auditor gets "server-boundary" prompt |
 
-Always run: security, devil-advocate, root-cause, blast-radius. Everything else is gated.
+Always run: security-auditor, pr-reviewer, fix-reviewer, blast-radius-reviewer. Everything else is gated.
 
 ### Lever 5 — Diff-size threshold
-- Diff < 100 LOC → recommend `/review` instead, panel is overkill
+- Diff < 100 LOC → recommend `/core:review` instead, panel is overkill
 - 100-500 LOC → full panel
 - 500-2000 LOC → full panel, but increase per-agent finding cap to 10
 - > 2000 LOC → split by domain (e.g. UI files panel + backend files panel), warn user about cost
@@ -116,12 +120,11 @@ Each agent is instructed to cap output at:
 ## Required prerequisites
 
 ```bash
-# Specialist agents installed
-for a in security-auditor performance-auditor accessibility-auditor \
-         devil-advocate root-cause-reviewer blast-radius-reviewer \
-         pr-reviewer bug-investigator dependency-auditor \
-         design-token-auditor i18n-auditor seo-auditor; do
-  test -f ${CLAUDE_PLUGIN_ROOT}/agents/$a.md && echo "$a: OK" || echo "$a: MISSING"
+# Specialist agents installed (invoked as core:<name>)
+for a in security-auditor pr-reviewer fix-reviewer blast-radius-reviewer \
+         perf-reviewer accessibility-auditor design-token-auditor \
+         dependency-auditor i18n-auditor seo-auditor bug-investigator; do
+  test -f "${CLAUDE_PLUGIN_ROOT}/agents/$a.md" && echo "$a: OK" || echo "$a: MISSING"
 done
 
 # Clean git state
@@ -141,12 +144,11 @@ Diff:          <branch> → <base>  (<N> files, +<add> -<rem> LOC)
 Total agents:  <count>             (gated by file types)
 
 Active panel:
-  - security-auditor     [sonnet]   always
-  - devil-advocate       [sonnet]   always
-  - root-cause-reviewer  [sonnet]   always
-  - blast-radius-reviewer[sonnet]   always
-  - pr-reviewer          [sonnet]   always
-  - <gated agents>       [haiku]    based on file types
+  - core:security-auditor        always
+  - core:pr-reviewer             always
+  - core:fix-reviewer            always
+  - core:blast-radius-reviewer   always
+  - <gated agents>               based on file types
 
 Skipped (no relevant files):
   - <agent>: <reason>
@@ -155,7 +157,7 @@ Estimated cost: $<x.xx>  (cached-bundle math: see Lever 2)
 Diff size: <threshold tier>
 ```
 
-If diff < 100 LOC, suggest `/review` and ask whether to proceed anyway.
+If diff < 100 LOC, suggest `/core:review` and ask whether to proceed anyway.
 
 Wait for "go" or ack.
 
@@ -174,11 +176,11 @@ Write this bundle as a single text variable in your prompt. Same bytes across al
 ## Step 2 — Dispatch agents in parallel
 
 In ONE message, spawn all gated agents with `Agent` tool calls. Each call:
-- `subagent_type`: the specific agent (e.g. `security-auditor`)
+- `subagent_type`: the specific agent with the plugin prefix (e.g. `core:security-auditor`)
 - `description`: `"Panel: <agent name>"`
-- `model`: per the right-sizing table
+- no `model` override (Lever 3)
 - `run_in_background`: `true`
-- `prompt`: BUNDLE + agent-specific framing (see per-agent prompt templates below)
+- `prompt`: BUNDLE + agent-specific framing (see per-agent prompt templates below). Each brief is self-contained: the agent sees nothing from this conversation except what is in the prompt.
 
 DO NOT poll. The system notifies when each finishes. Continue with other prep while waiting.
 
@@ -200,6 +202,10 @@ Constraints:
 - No filtering for plausibility — surface every concrete concern.
 - Output budget: ~300 tokens per finding, ~<N> findings max.
 ```
+
+Agent-specific framing for the two merged roles:
+- `core:pr-reviewer`: "Run your normal review, then a second adversarial pass: assume the change is wrong and try to construct the input, timing or state that breaks it."
+- `core:fix-reviewer`: "Treat the diff as a fix under review: for each behavioral change, state the root cause it addresses and whether the change fixes that cause or only the symptom."
 
 ## Step 3 — Aggregate (don't filter)
 
@@ -224,19 +230,18 @@ Single markdown report:
 - 🟢 <N>  no-concern listings (combined from agents)
 
 ## By agent
-- security-auditor: <count> findings → see §Security
-- devil-advocate: <count> findings → see §Adversarial
-- root-cause-reviewer: <count> findings → see §Root cause
-- blast-radius-reviewer: <count> findings → see §Blast radius
-- pr-reviewer: <count> findings → see §General
+- core:security-auditor: <count> findings → see §Security
+- core:pr-reviewer: <count> findings → see §General + adversarial
+- core:fix-reviewer: <count> findings → see §Root cause
+- core:blast-radius-reviewer: <count> findings → see §Blast radius
 - <other gated agents>: ...
 
 ## All findings (deduped by file:line)
 
 ### 🔴 1. src/api/x.ts:42 — <one-line summary>
-Flagged by: security-auditor, devil-advocate
+Flagged by: core:security-auditor, core:pr-reviewer
 <security framing>
-<devil-advocate framing>
+<adversarial framing>
 Suggested fix: <if any agent proposed one>
 
 ### 🔴 2. src/lib/y.ts:18 — ...
@@ -244,19 +249,16 @@ Suggested fix: <if any agent proposed one>
 
 ## Per-agent full reports
 
-### §Security (security-auditor)
+### §Security (core:security-auditor)
 <verbatim>
 
-### §Adversarial (devil-advocate)
+### §General + adversarial (core:pr-reviewer)
 <verbatim>
 
-### §Root cause (root-cause-reviewer)
+### §Root cause (core:fix-reviewer)
 <verbatim>
 
-### §Blast radius (blast-radius-reviewer)
-<verbatim>
-
-### §General (pr-reviewer)
+### §Blast radius (core:blast-radius-reviewer)
 <verbatim>
 ```
 
@@ -266,14 +268,14 @@ Ask the user via `AskUserQuestion`:
 
 ```
 Triage:
-  FIX-RED-NOW       — invoke /fix-after-review on 🔴 only
+  FIX-RED-NOW       — invoke /core:fix-after-review on 🔴 only
   FIX-ALL-NOW       — 🔴 + 🟡
-  ESCALATE-RED      — spawn bug-investigator per 🔴 to trace deeper
+  ESCALATE-RED      — spawn core:bug-investigator per 🔴 to trace deeper
   DEFER-TO-PR       — open PR with this report as a checklist; address in PR comments
   DISMISS           — read it, take notes, no action
 ```
 
-- ESCALATE-RED dispatches bug-investigator (sonnet) as a follow-up agent per 🔴 finding with the bundle + specific finding context. Use sparingly (each invocation is another bundle pass — but cached, so cheap).
+- ESCALATE-RED dispatches `core:bug-investigator` as a follow-up agent per 🔴 finding with the bundle + specific finding context. Use sparingly (each invocation is another bundle pass — but cached, so cheap).
 
 ## Step 6 — Hand-off
 
@@ -286,7 +288,7 @@ Saved report: docs/panel-reviews/PanelReview-<ts>-<branch>.md
 
 Next steps:
   - <based on triage choice>
-  - /cz-commit when ready to commit
+  - commit when ready (the user decides what and when)
 ```
 
 Save the full report to `docs/panel-reviews/PanelReview-<ts>-<branch>.md` (create dir if needed) so future runs / PRs can reference it.
@@ -296,11 +298,11 @@ Save the full report to `docs/panel-reviews/PanelReview-<ts>-<branch>.md` (creat
 - **One panel agent fails** → continue, note "agent X failed: <error>" in the output. Don't halt the panel.
 - **Bundle exceeds context window** (very large diff) → split into UI-files panel + backend-files panel, two separate runs.
 - **No findings at all** → "Panel found nothing across <N> agents. This is rare; verify the diff actually changed runtime behavior."
-- **User wants to re-run after fixing 🔴** → invoke `/panel-review` again; the new diff scopes naturally.
+- **User wants to re-run after fixing 🔴** → invoke `/core:panel-review` again; the new diff scopes naturally.
 - **Cost concern mid-run** → if estimated cost exceeds $5, ask the user to confirm before dispatching the panel.
 
 ## Why this exists
 
-`/review` produces high-precision findings via a two-gate filter and inter-batch dedup with skepticism. That's exactly right for "ship-or-block" PR gating.
+`/core:review` produces high-precision findings via a two-gate filter and inter-batch dedup with skepticism. That's exactly right for "ship-or-block" PR gating.
 
-`/panel-review` is the opposite — high recall, every concrete concern visible, human filters. That's what bugbot-style review buys you. Use both: `/panel-review` first (find everything), then `/review` (verify-and-block before merge). The two are complementary, not redundant.
+`/core:panel-review` is the opposite — high recall, every concrete concern visible, human filters. That's what bugbot-style review buys you. Use both: `/core:panel-review` first (find everything), then `/core:review` (verify-and-block before merge). The two are complementary, not redundant.

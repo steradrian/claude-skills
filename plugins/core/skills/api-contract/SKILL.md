@@ -6,6 +6,8 @@ argument-hint: <endpoint or feature description>
 
 Generate a complete typed API pipeline for: $ARGUMENTS
 
+**Package manager rule:** detect from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb`/`bun.lock` → bun, `package-lock.json` → npm) and use it for every command below; `<pm>` stands for the detected one.
+
 ## Phase 1: Read the Spec and Context
 
 Find and read the API specification (OpenAPI file, GraphQL schema, or endpoint docs from $ARGUMENTS).
@@ -56,7 +58,7 @@ Produce all of the following, in order:
 
 Run TypeScript compilation on the generated files:
 ```bash
-npx tsc --noEmit
+<pm> exec tsc --noEmit
 ```
 
 Verify:

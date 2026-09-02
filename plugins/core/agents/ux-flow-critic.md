@@ -1,6 +1,7 @@
 ---
 name: ux-flow-critic
 model: sonnet
+tools: Read, Grep, Glob, Bash, WebFetch
 description: Use this agent as part of the spec-from-prototype pipeline to critique a drafted spec for UX and flow gaps — dead-ends, missing states, auth boundary, empty/error/loading/offline, onboarding, accessibility. Returns findings only; does NOT rewrite the spec. Triggers on phrases like "critique this spec for UX gaps", "find UX dead-ends", "review user flows for completeness".
 ---
 

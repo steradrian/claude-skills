@@ -1,64 +1,51 @@
 #!/bin/bash
-# PreToolUse hook — BLOCK any `git push` that targets main / master.
-# Exits 2 (= "abort tool call") with an explanation. Allows everything
-# else (feature-branch pushes, bare `git push` from a non-main branch).
+# PreToolUse(Bash) — block any `git push` that would land on main / master.
+# Exit 2 aborts the tool call and shows stderr to Claude. Everything else exits 0.
 #
-# Two cases blocked:
-#   1. EXPLICIT — command string contains both `git push` and any of
-#      `main` / `master` (e.g. `git push origin main`, `git push -u
-#      origin main:main`). Case-insensitive match.
-#   2. IMPLICIT — bare `git push` (or `git push origin`) when the
-#      current branch is main / master. Check via `git symbolic-ref
-#      --short HEAD` from the harness's cwd.
-#
-# To push to main, the user does it themselves in their terminal —
-# this guard intentionally has no Claude-side bypass.
+# Blocked:
+#   1. Explicit target: `git push origin main`, `git push -u origin main:main`,
+#      `git push origin HEAD:main`.
+#   2. Implicit target while HEAD is main/master: bare `git push`,
+#      `git push origin`, `git push -u origin`, `git push origin HEAD`.
+# `git -C <dir> push` and chained commands are handled. `--dry-run` is allowed.
+# There is deliberately no Claude-side bypass; the user pushes main themselves.
 
 set -u
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+read_hook_input
+CMD=$(hook_field '.tool_input.command')
+[ -n "$CMD" ] || exit 0
 
-CMD=$(echo "$CLAUDE_TOOL_INPUT" | python3 -c \
-  'import sys,json; d=json.load(sys.stdin); print(d.get("command",""))' \
-  2>/dev/null)
+# Split on shell separators and inspect each simple command.
+printf '%s\n' "$CMD" | tr ';&|' '\n\n\n' | while IFS= read -r part; do
+  # Normalise: strip leading whitespace, drop `git -C <dir>` / `git -c k=v` prefixes.
+  part=$(printf '%s' "$part" | sed -E 's/^[[:space:]]+//; s/^git[[:space:]]+(-C[[:space:]]+[^[:space:]]+[[:space:]]+|-c[[:space:]]+[^[:space:]]+[[:space:]]+)+/git /')
+  printf '%s' "$part" | grep -qE '^git[[:space:]]+push\b' || continue
+  printf '%s' "$part" | grep -qE -- '--dry-run\b' && continue
 
-# Quick exit: not a git push at all. Anchor to start-of-command or
-# a shell separator so `echo "git push ..."` doesn't get caught as
-# a false positive.
-if ! echo "$CMD" | grep -qE '(^|;|&&|\|\||\|)[[:space:]]*git[[:space:]]+push\b'; then
-  exit 0
-fi
-
-# Skip if push has --dry-run anywhere — safe by definition.
-if echo "$CMD" | grep -qE '\-\-dry-run\b'; then
-  exit 0
-fi
-
-# Case 1 — explicit main/master target. Match either as a separate
-# word or as the right-hand side of `branch:main` / `HEAD:main`.
-# Tolerates surrounding flags / refspecs.
-if echo "$CMD" | grep -qiE '(^|;|&&|\|\||\|)[[:space:]]*git[[:space:]]+push[^|;&]*(\b(main|master)\b|:[[:space:]]*(main|master)\b)'; then
-  cat >&2 <<EOF
-[no-push-to-main] BLOCKED: this command would push to main/master.
-  command: $CMD
-  Pushes to main are reserved for the user. If you want this push,
-  run it yourself in your terminal — Claude is not allowed to do it.
-EOF
-  exit 2
-fi
-
-# Case 2 — implicit push (no branch arg) from a main/master HEAD.
-# Patterns: `git push`, `git push origin`, `git push -u origin`.
-if echo "$CMD" | grep -qE '(^|;|&&|\|\||\|)[[:space:]]*git[[:space:]]+push([[:space:]]+-u)?([[:space:]]+origin)?[[:space:]]*(;|&|\|\||$)'; then
-  CURRENT=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
-  if [ "$CURRENT" = "main" ] || [ "$CURRENT" = "master" ]; then
+  # Case 1: explicit main/master anywhere after `push` (as a word or as a refspec target).
+  if printf '%s' "$part" | grep -qiE '^git[[:space:]]+push.*(\b(main|master)\b|:[[:space:]]*(main|master)\b)'; then
     cat >&2 <<EOF
-[no-push-to-main] BLOCKED: bare 'git push' from branch '$CURRENT'.
-  command: $CMD
-  Pushes to main are reserved for the user. Switch off main first
-  (or push from an explicit feature branch) — Claude is not allowed
-  to push directly to main / master.
+[no-push-to-main] BLOCKED: this command would push to main/master.
+  command: $part
+  Pushes to main are reserved for the user. Ask them to run it, or push a feature branch and open a PR.
 EOF
     exit 2
   fi
-fi
 
-exit 0
+  # Case 2: no branch named, so the target is the current branch.
+  # Strip flags and the remote; if nothing or only HEAD remains, it is implicit.
+  rest=$(printf '%s' "$part" | sed -E 's/^git[[:space:]]+push//; s/[[:space:]]+-[-[:alnum:]=]+//g; s/^[[:space:]]+//; s/^[[:alnum:]_.-]+//; s/^[[:space:]]+//')
+  if [ -z "$rest" ] || [ "$rest" = "HEAD" ]; then
+    current=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+    if [ "$current" = "main" ] || [ "$current" = "master" ]; then
+      cat >&2 <<EOF
+[no-push-to-main] BLOCKED: '$part' from branch '$current' would push to $current.
+  Switch to a feature branch first and open a PR. Claude may not push main/master.
+EOF
+      exit 2
+    fi
+  fi
+done
+# `while` runs in a subshell; propagate its exit code.
+exit $?

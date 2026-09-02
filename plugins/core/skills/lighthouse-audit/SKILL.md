@@ -311,7 +311,7 @@ Bundle analysis surfaces which specific packages and routes are bloating the bun
 **1. Parse `next build` output for oversized routes:**
 
 ```bash
-npx next build 2>&1 | tee /tmp/next-build-output.txt
+<pm> run build 2>&1 | tee /tmp/next-build-output.txt
 ```
 
 ```bash
@@ -332,10 +332,10 @@ if (oversized.length) {
 "
 ```
 
-**2. Check for unused dependencies (lightweight — defer to `/dead-code` skill for full analysis):**
+**2. Check for unused dependencies (lightweight — defer to `/core:dead-code` skill for full analysis):**
 
 ```bash
-npx knip --include dependencies 2>&1 | head -50
+<pm> exec knip --include dependencies 2>&1 | head -50
 ```
 
 If knip is not installed, skip this sub-step.

@@ -9,14 +9,17 @@ description: >
   product-manager pass to reconcile feedback. The agent makes every
   judgment call itself — it does NOT ask the user questions during
   the run. Every ambiguity becomes a numbered assumption the user
-  reviews at the end. Triggered by `/spec-from-prototype <input>` or
+  reviews at the end. Triggered by `/core:spec-from-prototype <input>` or
   natural language: "build a spec from this prototype", "turn this
   pitch into tickets", "PO this prototype end-to-end".
+argument-hint: <prototype path, URL, screenshot or pitch>
 disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Agent, WebFetch
 ---
 
 # Spec from prototype
+
+Input: $ARGUMENTS
 
 Autonomous product-spec generator. Reads a prototype (any form), drafts
 the full spec + ticket list, runs a parallel critique panel, reconciles
@@ -36,10 +39,10 @@ tickets are explicitly flagged.
 
 ## When NOT to use
 
-- A single ticket or bug → use the `product-manager` agent directly.
-- A spec that already exists and just needs revision → use `product-manager`
+- A single ticket or bug → use the `core:product-manager` agent directly.
+- A spec that already exists and just needs revision → use `core:product-manager`
   with the existing doc as input.
-- Architecture decisions for already-scoped work → use `/build-arch`.
+- Architecture decisions for already-scoped work → use `/core:build --arch`.
 
 ## Strict invariants
 
@@ -92,7 +95,7 @@ Pick the feature slug now (kebab-case, ≤ 4 words). Write it down.
 
 ### Phase 1 — Draft spec (product-manager agent, foreground)
 
-Spawn `product-manager` with a self-contained prompt. The agent's
+Spawn `core:product-manager` with a self-contained prompt. The agent's
 default behavior is to flag ambiguities as open questions — **override
 that** in the prompt: in this skill, ambiguities become assumptions.
 
@@ -149,9 +152,9 @@ Parse the response. Write each section to its file under
 ### Phase 2 — Parallel critique panel (3 agents, parallel)
 
 Spawn all three in a single message:
-- `ux-flow-critic`
-- `eng-feasibility-critic`
-- `business-pm-critic`
+- `core:ux-flow-critic`
+- `core:eng-feasibility-critic`
+- `core:business-pm-critic`
 
 Each gets the same context: the just-written spec files. Each critic
 returns structured findings (see their agent definitions).
@@ -187,7 +190,7 @@ Collect all three returns. Write the raw findings to
 
 ### Phase 3 — Reconcile (product-manager second pass)
 
-Spawn `product-manager` again. Required prompt:
+Spawn `core:product-manager` again. Required prompt:
 
 ```
 You are doing a reconcile pass on the spec you just drafted. Three

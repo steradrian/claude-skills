@@ -1,6 +1,7 @@
 ---
 name: security-auditor
 model: sonnet
+tools: Read, Grep, Glob, Bash, WebFetch
 description: Use this agent to audit code for security vulnerabilities. Triggers on phrases like "security audit", "check for vulnerabilities", "is this secure", "audit auth flow", "check for XSS", "check for injection", "security review". Checks OWASP Top 10 and auth security patterns.
 ---
 

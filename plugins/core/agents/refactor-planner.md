@@ -1,6 +1,7 @@
 ---
 name: refactor-planner
 model: opus
+tools: Read, Grep, Glob, Bash, WebFetch
 description: Use this agent to plan refactors before executing them. Triggers on phrases like "refactor X", "clean up this code", "restructure this module", "I want to refactor", "plan a refactor of". Always maps blast radius and produces a staged migration plan before any code is written.
 ---
 

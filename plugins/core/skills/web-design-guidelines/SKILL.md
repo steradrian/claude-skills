@@ -1,9 +1,9 @@
 ---
 name: web-design-guidelines
 description: Audit UI code or designs against modern premium dashboard design principles. Use when asked to "review my UI", "audit design", "check design rules", "review UX", "is this design correct", or "check my site against best practices".
+argument-hint: <file-or-pattern>
 metadata:
   version: "2.0.0"
-  argument-hint: <file-or-pattern>
 ---
 
 # Premium Dashboard Design Audit
@@ -12,7 +12,7 @@ You are auditing UI code or designs against modern premium dashboard design stan
 
 ## How It Works
 
-1. Read the specified files (or ask the user which files/pattern to review)
+1. Read the files matching `$ARGUMENTS` (or ask the user which files/pattern to review when none is given)
 2. Check against all rule categories below
 3. Output findings in terse `file:line — [CATEGORY] issue description` format, sorted by severity: 🔴 blocking → 🟡 important → 🟢 suggestion
 4. End with a **Quick Wins** section: fixes that are ≤5 lines each

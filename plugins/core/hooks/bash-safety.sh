@@ -1,26 +1,42 @@
 #!/bin/bash
-# PreToolUse hook — surface a warning when a Bash command contains destructive patterns.
-# Does NOT block execution (exit 0). Outputs to stdout so Claude sees it in context
-# and can confirm with the user or reconsider before proceeding.
+# PreToolUse(Bash) — turn destructive commands into a permission prompt.
+# Emits hookSpecificOutput.permissionDecision = "ask" so the user confirms,
+# even in auto mode. Never blocks outright; never prints to stdout otherwise.
 
-CMD=$(echo "$CLAUDE_TOOL_INPUT" | python3 -c \
-  'import sys,json; d=json.load(sys.stdin); print(d.get("command",""))' \
-  2>/dev/null)
+set -u
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+read_hook_input
+CMD=$(hook_field '.tool_input.command')
+[ -n "$CMD" ] || exit 0
 
 PATTERNS=(
-  "rm -rf"
-  "git reset --hard"
-  "git clean -f"
-  "git checkout -- "
-  "git branch -D"
-  "DROP TABLE"
-  "DROP DATABASE"
-  "truncate table"
+  'rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f'
+  'rm[[:space:]]+-[a-zA-Z]*f[a-zA-Z]*r'
+  'git[[:space:]]+reset[[:space:]]+--hard'
+  'git[[:space:]]+clean[[:space:]]+-[a-zA-Z]*f'
+  'git[[:space:]]+checkout[[:space:]]+--[[:space:]]'
+  'git[[:space:]]+restore[[:space:]]+(--worktree|-W|\.)'
+  'git[[:space:]]+branch[[:space:]]+-D'
+  'git[[:space:]]+push.*--force(-with-lease)?'
+  'git[[:space:]]+push.*[[:space:]]-f\b'
+  'DROP[[:space:]]+(TABLE|DATABASE|SCHEMA)'
+  'TRUNCATE[[:space:]]+TABLE'
+  'prisma[[:space:]]+(migrate[[:space:]]+reset|db[[:space:]]+push[[:space:]]+--force-reset)'
+  'supabase[[:space:]]+db[[:space:]]+reset'
+  'docker[[:space:]]+(system|volume)[[:space:]]+prune'
+  'chmod[[:space:]]+-R[[:space:]]+777'
 )
 
-for PATTERN in "${PATTERNS[@]}"; do
-  if echo "$CMD" | grep -qi "$PATTERN"; then
-    echo "[safety] Destructive pattern detected: '$PATTERN' — confirm this is intentional."
-    break
+for pattern in "${PATTERNS[@]}"; do
+  if printf '%s' "$CMD" | grep -qiE "$pattern"; then
+    reason="Destructive pattern '$pattern' in: $CMD"
+    if command -v jq >/dev/null 2>&1; then
+      jq -cn --arg r "$reason" '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"ask",permissionDecisionReason:$r}}'
+    else
+      printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"%s"}}\n' \
+        "$(printf '%s' "$reason" | sed 's/"/\\"/g')"
+    fi
+    exit 0
   fi
 done
+exit 0

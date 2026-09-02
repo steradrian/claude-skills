@@ -505,7 +505,7 @@ const HeavyChart = dynamic(() => import('../components/HeavyChart'), { ssr: fals
 ```bash
 ANALYZE=true next build
 ```
-Install: `npm install @next/bundle-analyzer`
+Install with the project's package manager (detected from the lockfile): `<pm> add -D @next/bundle-analyzer`
 
 ---
 

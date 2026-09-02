@@ -1,20 +1,23 @@
 ---
 name: lighthouse-audit-light
 description: >
-  Fast static code analysis for web performance issues — no Lighthouse run needed. Reads a page's component tree and checks for CLS, LCP, TBT, and bundle issues. Use when the user wants a quick performance check, says "quick audit", "check performance of <page>", "perf check", or invokes /lighthouse-audit-light <page-name>. Does NOT replace the full /lighthouse-audit skill for comprehensive scoring.
+  Fast static code analysis for web performance issues — no Lighthouse run needed. Reads a page's component tree and checks for CLS, LCP, TBT, and bundle issues. Use when the user wants a quick performance check, says "quick audit", "check performance of <page>", "perf check", or invokes /core:lighthouse-audit-light <page-name>. Does NOT replace the full /core:lighthouse-audit skill for comprehensive scoring.
+argument-hint: <page-name>
 ---
 
 # Lighthouse Audit Light
 
 Fast, read-only performance analysis. Crawls a page's component tree and checks for common performance anti-patterns — no builds, no Lighthouse, no branches.
 
-**Usage:** `/lighthouse-audit-light <page-name>`
+**Usage:** `/core:lighthouse-audit-light <page-name>`
+
+**Package manager rule:** detect from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb`/`bun.lock` → bun, `package-lock.json` → npm); `<pm>` below stands for the detected one.
 
 ---
 
 ## Step 0: Resolve page path
 
-The argument is a human-friendly page name. Resolve it to actual files.
+The argument (`$ARGUMENTS`) is a human-friendly page name. Resolve it to actual files.
 
 ### Resolve the page
 
@@ -202,7 +205,7 @@ Scanned <N> files | Found <X> issues (<S> safe, <V> verify, <R> review)
 If no issues found in a category, omit that section.
 
 If zero issues found overall:
-> "No performance issues detected in the component tree for this page. For a comprehensive score with real browser metrics, run the full `/lighthouse-audit`."
+> "No performance issues detected in the component tree for this page. For a comprehensive score with real browser metrics, run the full `/core:lighthouse-audit`."
 
 ### Severity mapping
 
@@ -224,7 +227,7 @@ After the report, ask:
 If yes:
 
 1. Apply all `[safe]` fixes
-2. Run `pnpm run build 2>&1 | tail -30` to verify
+2. Run `<pm> run build 2>&1 | tail -30` to verify
 3. If build passes, apply `[verify]` fixes one at a time with build checks
 4. Skip `[review]` fixes — describe them but don't auto-apply
 5. Do NOT create branches or commits — the user decides when to commit

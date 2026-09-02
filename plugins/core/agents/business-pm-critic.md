@@ -1,6 +1,7 @@
 ---
 name: business-pm-critic
 model: sonnet
+tools: Read, Grep, Glob, Bash, WebFetch
 description: Use this agent as part of the spec-from-prototype pipeline to critique a drafted spec for business / go-to-market gaps — monetization, retention loops, launch criteria, success metrics, differentiation, distribution, compliance. Returns findings only; does NOT rewrite the spec. Triggers on phrases like "critique this spec for business gaps", "find monetization gaps", "review for go-to-market readiness".
 ---
 

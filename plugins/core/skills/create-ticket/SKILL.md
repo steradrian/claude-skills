@@ -37,7 +37,7 @@ Ask only what you cannot determine from the code and git history:
 
 ## Step 3: Delegate to Agent
 
-**End-of-work mode:** Summarize the diff, then **spawn a ticket-writer agent** (runs at sonnet) with:
+**End-of-work mode:** Summarize the diff, then **spawn a `core:ticket-writer` agent** with:
 - Summary of what was built
 - Plan deviations (if any)
 - Known follow-ups

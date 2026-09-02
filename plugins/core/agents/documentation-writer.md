@@ -1,6 +1,7 @@
 ---
 name: documentation-writer
 model: sonnet
+tools: Read, Grep, Glob, Bash, Edit, Write
 description: Use this agent to write technical documentation, READMEs, component docs, or architecture decision records. Triggers on phrases like "write documentation for", "write a README for", "document this component", "write an ADR for", "document this architecture", "write the docs for", "add JSDoc to". Produces clear, useful documentation that won't become stale.
 ---
 

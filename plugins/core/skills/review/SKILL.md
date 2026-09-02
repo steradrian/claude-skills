@@ -1,6 +1,6 @@
 ---
 name: review
-description: Comprehensive pre-PR code review with parallel batch agents. Triggers on "review this PR", "review my changes", "code review", "review my PR", "check my implementation", "PR review". Dispatches to pr-reviewer agents per file batch, then merges all findings into a unified report.
+description: Comprehensive pre-PR code review with parallel batch agents. Triggers on "review this PR", "review my changes", "code review", "review my PR", "check my implementation", "PR review". Dispatches to core:pr-reviewer agents per file batch, then merges all findings into a unified report.
 disable-model-invocation: false
 allowed-tools: Read, Glob, Grep, Agent, Bash
 ---
@@ -16,7 +16,7 @@ allowed-tools: Read, Glob, Grep, Agent, Bash
 > 3. **> 12 changed files:** Split into **1 agent per 3 files** (e.g., 30 files → 10 agents). Same grouping rule: keep related files in the same batch.
 > 4. Spawn all batch agents **as background tasks** in a single message (multiple Agent tool calls). For each Agent call, set:
 >    - `name`: `"review-batch-1"`, `"review-batch-2"`, etc.
->    - `subagent_type`: `"pr-reviewer"` — routes each batch to the specialized review agent
+>    - `subagent_type`: `"core:pr-reviewer"` — routes each batch to the specialized review agent
 >    - `run_in_background`: `true` — this is what makes them run concurrently
 >    - `description`: `"Review batch N (<file count> files)"`
 >    Each batch agent receives:
@@ -24,7 +24,7 @@ allowed-tools: Read, Glob, Grep, Agent, Bash
 >    - **Branch context**: branch name and commit messages (`git log $MERGE_BASE...HEAD --oneline`) so the agent understands intent behind the changes
 >    - A preamble: `You are reviewing ONLY the following files from the diff. Read their full contents and the diff hunks for each. Ignore all other changed files.\n\nFiles assigned to you:\n- file1.tsx\n- file2.ts\n- ...`
 >    - Instruct each agent to also run the linter on its own file batch.
->    Note: pr-reviewer has its own review dimensions, two-gate filter, and multi-pass logic built in. Do NOT re-embed the full review instructions — just provide files, diff context, reference files, and branch context.
+>    Note: core:pr-reviewer has its own review dimensions, two-gate filter, and multi-pass logic built in. Do NOT re-embed the full review instructions — just provide files, diff context, reference files, and branch context.
 > 5. **Wait for all background agents to complete.** You will be automatically notified as each finishes — do NOT poll or sleep. Do NOT proceed until all batch agents have returned their results.
 > 6. After all batch agents complete, spawn **one final general-purpose Agent** (foreground, `run_in_background: false`) named `"review-merge"` as the **merge agent**. Pass it all batch results concatenated and instruct it to:
 >    - Deduplicate findings (same file:line reported by overlapping batches)

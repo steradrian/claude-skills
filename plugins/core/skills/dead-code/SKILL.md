@@ -1,19 +1,19 @@
 ---
 name: dead-code
-description: Run knip to find and safely remove dead code, unused exports, and unused dependencies
+description: Run knip to find and safely remove dead code, unused exports, and unused dependencies. Use when asked to "clean up dead code", "find unused code", "remove unused exports" or "run knip".
 allowed-tools: Read, Edit, Glob, Grep, Bash
 ---
 
 # Dead Code Cleanup
 
-Activates when the user says "clean up dead code", "find unused code", or "run knip".
+**Package manager rule:** detect from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb`/`bun.lock` → bun, `package-lock.json` → npm) and use it for every command below; `<pm>` stands for the detected one.
 
 ## Workflow
 
 ### Step 1 — Run knip
 
 ```bash
-yarn knip 2>&1
+<pm> exec knip 2>&1
 ```
 
 If `knip` is not configured, check `package.json` for the script name (may be `dead-code`, `unused`, etc.). If no dead code tool exists, inform the user and suggest adding knip.
@@ -79,12 +79,12 @@ After identifying dependencies to remove, scan devDependencies for any `@types/*
 ### Step 5 — Apply removals
 
 Only after user approval:
-- Remove unused dependencies: `yarn remove <package>`
+- Remove unused dependencies: `<pm> remove <package>`
 - Remove orphaned `@types/*` packages alongside their runtime counterparts
 - Remove unused exports: delete the export statement (keep the function if used internally)
 - Remove unused files: delete the file
-- Run `npx tsc --noEmit` after removals to verify nothing broke
-- Run `npx vitest run` to confirm tests still pass
+- Run `<pm> exec tsc --noEmit` after removals to verify nothing broke
+- Run `<pm> exec vitest run` to confirm tests still pass
 
 ### Constraints
 

@@ -1,6 +1,7 @@
 ---
 name: blast-radius-reviewer
-model: sonnet
+model: opus
+tools: Read, Grep, Glob, Bash, WebFetch
 description: Use this agent to map the cross-codebase impact of a diff — every caller, importer, type consumer, and config dependency affected by the changes. Triggers on phrases like "what does this change break", "blast radius of these changes", "find affected callers", "who uses this". Returns a structured map of impacted files with severity per impact, NOT a generic code review.
 ---
 
@@ -15,7 +16,7 @@ A change has blast radius when:
 - A component's props changed and users render with old props
 - A shared constant, enum, or config key changed and downstream uses the old value
 - A behavior contract changed silently (e.g., function now returns `null` instead of throwing) and callers handle the old contract
-- A config option in `payload.config`, `next.config`, `tailwind.config`, `tsconfig`, etc. changed and affects how OTHER files are built/typed/served
+- A config option in `next.config`, `tailwind.config`, `tsconfig`, a CMS/ORM config (`payload.config`, `schema.prisma`, `drizzle.config`), etc. changed and affects how OTHER files are built/typed/served
 - A hook's dependency / return shape changed and consumers destructure the old shape
 - A migration / schema change affects rows already written under the old shape
 - A CSS class / token / variable changed and components referencing it now render wrong
@@ -34,8 +35,8 @@ A change has blast radius when:
    - Constants / enums / config keys changed
    - Hooks: changed return shape, changed param shape
    - Behavior contracts: a fn that used to throw now returns null, or vice versa
-   - DB schema changes (Payload collections, migrations)
-   - Build / config file changes that affect compile output (`next.config`, `tsconfig`, `tailwind.config`, `payload.config`, `package.json` script changes, env var changes)
+   - DB schema changes — when the project has a CMS or ORM with lifecycle hooks or migrations (Payload, Prisma, Drizzle): collections/models, field definitions, migrations
+   - Build / config file changes that affect compile output (`next.config`, `tsconfig`, `tailwind.config`, the CMS/ORM config, `package.json` script changes, env var changes)
 
 ### Step 2 — Trace each impact point
 For every item identified in Step 1:
@@ -93,7 +94,7 @@ Report findings as a markdown table, grouped by changed-thing → affected-calle
 
 ### No-impact changes
 - src/styles/globals.css — token additions only, no existing references changed.
-- src/types/api.ts — additive type properties, all existing consumers still type-check.
+- src/types/generated.ts — additive type properties, all existing consumers still type-check.
 ```
 
 ## Severity calibration

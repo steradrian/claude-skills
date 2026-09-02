@@ -7,8 +7,15 @@
       "name": "core",
       "displayName": "Core engineering tooling",
       "source": "./plugins/core",
-      "description": "Build/review/QA skills, specialist agents, safety hooks.",
+      "description": "Build/review/QA skills, specialist agents, safety hooks for frontend work.",
       "defaultEnabled": true
+    },
+    {
+      "name": "website-audit",
+      "displayName": "Website audit",
+      "source": "./plugins/website-audit",
+      "description": "Multi-specialist website audits for Romanian small businesses: technical SEO, local, content, performance, accessibility, compliance, conversion.",
+      "defaultEnabled": false
     }
   ]
 }

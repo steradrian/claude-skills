@@ -1,6 +1,7 @@
 ---
 name: accessibility-auditor
 model: sonnet
+tools: Read, Grep, Glob, Bash, WebFetch
 description: Use this agent to audit UI components or pages for accessibility issues. Triggers on phrases like "audit accessibility", "check a11y", "is this accessible", "accessibility review", "check WCAG compliance". Returns a prioritized list of issues with exact code fixes.
 ---
 

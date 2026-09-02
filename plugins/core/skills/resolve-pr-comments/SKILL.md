@@ -2,15 +2,16 @@
 name: resolve-pr-comments
 description: >
   Process every open review comment on a GitHub PR end-to-end: fetch all
-  unresolved threads, fix each at the source via the fix-after-review skill
-  (parallelizing across files via superpowers), commit the whole round as a
-  single commit, reply to each thread in caveman style, then resolve the
-  threads. Triggered by `/resolve-pr-comments <FULL_PR_URL>` or natural-
+  unresolved threads, fix each at the source via the fix-pr-thread protocol
+  (independent files in parallel), commit the whole round as a
+  single commit, reply to each thread tersely, then resolve the
+  threads. Triggered by `/core:resolve-pr-comments <FULL_PR_URL>` or natural-
   language phrases like "resolve all PR comments on https://github.com/...",
   "fix and resolve the review comments on PR #1694",
   "address every comment on this PR", "go through the bot review comments
   and resolve them". REQUIRES a full PR URL or a PR number plus the current
   repo's origin — derive org/repo/number from the URL, never assume.
+argument-hint: <PR URL or #number>
 ---
 
 # Resolve PR comments
@@ -31,28 +32,21 @@ These rules exist because skipping any one of them produces silent data loss or 
 
 ## Required prerequisites
 
-Before doing anything, load these skills so their context is available:
+Before doing anything, load the per-thread fix protocol: `fix-pr-thread`. It bulletproofs against same-file races, orchestrator rollback and scope-widening. Try the `Skill` tool first; if it is not in the available-skills list, Read `${CLAUDE_PLUGIN_ROOT}/skills/fix-pr-thread/SKILL.md` directly — that is equivalent. Only declare it missing if it is absent from both.
 
-1. `superpowers:dispatching-parallel-agents` — for parallel fix execution across independent files (only used when ≥3 paths have unresolved threads).
-2. `caveman` — for the reply text style (full level).
-3. `fix-pr-thread` — the per-thread fix protocol. Replaces the older `fix-after-review` for this flow specifically; bulletproofs against same-file races, orchestrator rollback, and scope-widening.
+Two rules this flow depends on, stated here so no external skill is needed:
 
-**How to load a skill:**
-- First try invoking via the `Skill` tool (works when the skill appears in the system-reminder available-skills list).
-- If NOT in the system-reminder list, check if it exists as a file: `${CLAUDE_PLUGIN_ROOT}/skills/<name>/SKILL.md`. If the file exists, **Read it directly** — this is equivalent to loading it via `Skill`.
-- Only declare a skill "missing" if it is absent from BOTH the system-reminder list AND the filesystem.
-
-Do not stop the flow just because a skill isn't in the system-reminder list — always check the filesystem first.
+1. **Parallel agents get self-contained briefs.** When ≥3 paths have unresolved threads, dispatch one agent per path in a single message, each with everything it needs inline (the path, its threads with all comments, the diff hunks, the fix-pr-thread protocol text, the worktree path). An agent sees nothing from this conversation. Fewer than 3 paths: process inline, sequentially.
+2. **Replies are terse.** Drop articles, filler and hedging; fragments are fine; identifiers, file paths and error strings verbatim; 1–2 sentences. Examples in Step 5.
 
 ## Step 0 — Worktree setup
 
 All work runs in an isolated git worktree. Two entry paths:
 
-- **Common path** — invoked by `/pull-request` after PR open. Worktree already
-  exists at `.worktrees/pr-<N>` and this session is already cd'd into it.
-  Steps 0a–0c just verify and proceed.
-- **Direct invocation** — user runs `/resolve-pr-comments <URL>` standalone
-  (no preceding `/pull-request`). Worktree may not exist; this step creates it.
+- **Later round** — a previous round (or a `/loop` firing) already created
+  the worktree at `.worktrees/pr-<N>`. Steps 0a–0c just verify and proceed.
+- **First invocation** — user runs `/core:resolve-pr-comments <URL>` for the
+  first time. Worktree may not exist; this step creates it.
 
 ### 0a — Resolve the PR branch
 
@@ -93,11 +87,11 @@ the user's main checkout is on the PR branch. Print:
 ```
 Branch <BRANCH> is held by your main checkout at <path>.
 Switch your main checkout to a different branch, then re-run.
-(Or use /pull-request which handles this automatically.)
 ```
 
-Halt this round, but do NOT exit the loop — schedule the next `ScheduleWakeup`
-so a future round can succeed once the user switches.
+Halt this round, but do NOT exit the loop — leave the `/loop` schedule in
+place (see § Scheduling rounds) so a future round can succeed once the user
+switches.
 
 ### 0c — Move into the worktree
 
@@ -110,7 +104,7 @@ All subsequent steps run from this directory.
 ### 0d — Install dependencies (first time only)
 
 ```bash
-[ -d node_modules ] || pnpm install   # or detected PM
+[ -d node_modules ] || <PM> install   # PM detected from the lockfile, see Step 3c
 ```
 
 Subsequent rounds: `node_modules` is already present, skip.
@@ -127,7 +121,7 @@ commit would silently include unrelated changes.
 
 ### 0f — Acquire concurrency lock
 
-A second `/resolve-pr-comments` invocation (manual + `ScheduleWakeup` firing,
+A second `/core:resolve-pr-comments` invocation (manual + `/loop` firing,
 two manual triggers, etc.) on the same worktree would race on edits and
 produce duplicate commits. Take an atomic lock on the per-worktree git dir
 before doing anything else.
@@ -149,8 +143,8 @@ fi
 
 # Atomic acquire: mkdir is the only POSIX op guaranteed atomic across NFS, macOS, Linux
 if ! mkdir "$LOCKDIR" 2>/dev/null; then
-  echo "Another /resolve-pr-comments round in progress. Skipping this firing."
-  exit 0   # Soft-skip — next ScheduleWakeup retries
+  echo "Another /core:resolve-pr-comments round in progress. Skipping this firing."
+  exit 0   # Soft-skip — next /loop firing retries
 fi
 date +%s > "$LOCKDIR/started"
 ```
@@ -178,8 +172,8 @@ Accept either:
 Extract: `host`, `org`, `repo`, `pr_number`. Use these literally in every API call below — don't pass `--repo` flags that resolve to the current dir's origin.
 
 ```bash
-# example parse
-URL="$1"
+# example parse — $ARGUMENTS is the URL or number the user passed
+URL="$ARGUMENTS"
 ORG=$(echo "$URL" | sed -nE 's#https?://[^/]+/([^/]+)/[^/]+/pull/.*#\1#p')
 REPO=$(echo "$URL" | sed -nE 's#https?://[^/]+/[^/]+/([^/]+)/pull/.*#\1#p')
 PR=$(echo "$URL" | sed -nE 's#.*/pull/([0-9]+).*#\1#p')
@@ -245,11 +239,12 @@ edit the same file.
 Invoke the `fix-pr-thread` skill with input `{ path, threads }` per group.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/fix-pr-thread/SKILL.md` for the protocol.
 
-**Execution mode:** delegate the inline-vs-parallel decision to
-`superpowers:dispatching-parallel-agents` (loaded as a prerequisite). It
-applies its own threshold based on independence and shared state. Whatever
-it decides, the bedrock invariant holds: **one path group is a single unit
-of work — never split across agents**.
+**Execution mode:** fewer than 3 path groups → process them inline,
+sequentially, in this context. 3 or more → one foreground agent per path
+group, all dispatched in a single message, each with a self-contained brief
+(path, threads with every comment, diff hunks, the protocol text, worktree
+path). Whichever mode applies, the bedrock invariant holds: **one path group
+is a single unit of work — never split across agents**.
 
 Each invocation returns a per-thread result list:
 
@@ -261,7 +256,7 @@ Each invocation returns a per-thread result list:
 
 Three statuses, three downstream actions in Step 5/6:
 - **fixed** → reply "Fixed in <SHA>. ..." → resolve
-- **skipped** → reply with a specific caveman reason (out-of-scope, product decision, pre-existing, accepted nit, etc.) → **resolve** (do not leave open)
+- **skipped** → reply with a specific terse reason (out-of-scope, product decision, pre-existing, accepted nit, etc.) → **resolve** (do not leave open)
 - **dismissed** → reply "Dismissed. ..." → resolve
 
 ### 3c — Verify
@@ -297,7 +292,7 @@ of the three checks below, pick the first script name that exists:
 Use `jq -r '.scripts."<name>"' package.json` to check existence.
 
 **Step 3 — Read CLAUDE.md** if present at worktree root. If it documents
-specific verification commands (e.g. "always run `pnpm verify` before
+specific verification commands (e.g. "always run `<PM> verify` before
 PR"), prefer those over the detected ones. CLAUDE.md is the source of
 truth when it speaks.
 
@@ -324,9 +319,9 @@ Pick the highest tier that any file in `results.filesChanged` triggers. Run that
 
 | Tier | When (any file in results.filesChanged matches) | Check |
 |---|---|---|
-| **0 — none** | Only `*.md`, `src/migrations/*`, `*.sql`, `.gitignore`, CI configs, `docs/**` | Skip — tsc covered it |
-| **1 — build** | `package.json`, lockfile, `next.config.*`, `vite.config.*`, `tsconfig.json`, `*.d.ts` at root, anything that affects module resolution | `pnpm build` (or detected build script). Must succeed. |
-| **2 — runtime** | Any file under `src/app/**`, `src/components/**`, `src/lib/**`, server routes, middleware, payload config, anything that runs at request time | Tier 1 + dev-server smoke test (below) |
+| **0 — none** | Only `*.md`, migration files, `*.sql`, `.gitignore`, CI configs, `docs/**` | Skip — tsc covered it |
+| **1 — build** | `package.json`, lockfile, `next.config.*`, `vite.config.*`, `tsconfig.json`, `*.d.ts` at root, anything that affects module resolution | `<PM> run build` (or detected build script). Must succeed. |
+| **2 — runtime** | Any route file, component, shared lib/util, server action, route handler, middleware, app-level config, anything that runs at request time | Tier 1 + dev-server smoke test (below) |
 
 **Tier 2 dev-server smoke test:**
 
@@ -337,17 +332,19 @@ Pick the highest tier that any file in `results.filesChanged` triggers. Run that
    - If the change touches a specific user flow (auth, checkout, form submit), exercise that flow via `mcp__claude-in-chrome__find` + `mcp__claude-in-chrome__form_input`. Verify the network response (`mcp__claude-in-chrome__read_network_requests`) returns 2xx.
 4. Kill the dev server before the commit step. Do NOT leave it running across rounds — the next round's verification would race with it.
 
-Which pages count as "affected"? Use the file path:
-- `src/app/(frontend)/foo/page.tsx` → smoke `/foo`
-- `src/app/(payload)/admin/**` → smoke `/admin`
-- `src/payload.config.ts` or any collection / global → smoke both `/admin` and one `/` page that uses Payload
-- Shared component (`src/components/**`) → smoke any page that imports it (find via grep)
+Which pages count as "affected"? Derive from the file path. First find the app directory: `app/` if it exists at the repo root, else `src/app/` (`APP_DIR`). Then:
+- **Route files** (`<APP_DIR>/**/page.*`, `layout.*`, `loading.*`, `error.*`, `route.*`) → smoke the route the path maps to, dropping route groups `(group)` and filling dynamic segments `[slug]` with a real value from the app (e.g. `<APP_DIR>/(marketing)/foo/page.tsx` → `/foo`)
+- **Server actions / route handlers** → smoke the page that calls them and exercise the flow (form submit, fetch) so the network response is observed
+- **Middleware** → smoke one public and one protected route
+- **Config files** (`next.config.*`, env schema, i18n config, auth config) → smoke `/` plus one page that depends on the changed config
+- **Shared component / hook / util** → smoke any page that imports it (find via grep)
+- **If the app embeds a CMS or admin UI** (a `/admin` route, a CMS config file, collection/schema definitions) → additionally smoke `/admin` and one public page that renders CMS content
 
 If the page renders without console errors and the flow you exercised works, verification passes.
 
 If verification fails: same halt rules as above — do NOT commit, kill dev server, fire verification-failure notification, release lock. Surface what broke (console error / failed network call / page crash) in the halt message.
 
-**Why tiered, not always run browser:** Round-2 of PR #29 broke `next build` by removing a dep that cms-plugins dynamic-imports — `tsc --noEmit` was green. A SQL migration fix or a docs typo doesn't need a browser; a `package.json` mutation absolutely does.
+**Why tiered, not always run browser:** a past round broke `next build` by removing a dep that another package dynamic-imported — `tsc --noEmit` was green. A SQL migration fix or a docs typo doesn't need a browser; a `package.json` mutation absolutely does.
 
 ## Step 4 — Single commit
 
@@ -355,7 +352,7 @@ Stage only the files the agents actually changed. Avoid `git add -A`.
 
 ### Determine round number
 
-Each invocation of `/resolve-pr-comments` is a separate **round**. The commit subject includes the round number so the PR's commit history reads as a clear sequence (`round 1`, `round 2`, …).
+Each invocation of `/core:resolve-pr-comments` is a separate **round**. The commit subject includes the round number so the PR's commit history reads as a clear sequence (`round 1`, `round 2`, …).
 
 Read + increment a counter file inside the per-worktree git dir. This survives `git rebase`, `commit --amend`, branch resets, and force-pushes — the counter is not part of the commit graph, so no git operation can perturb it. It is reset only when the worktree is removed (which happens once on "Nothing to do" — at which point starting fresh from `round 1` is correct).
 
@@ -380,7 +377,7 @@ fix: PR review fixes (round <ROUND>) — #<PR_NUMBER>
 
 **Body is required and must be useful to a reader scanning the PR's commit history without opening each thread.** One bullet per fixed thread, in the order fixes were applied. Each bullet has two halves separated by `;`:
 
-1. **What changed** — terse caveman: identifiers/file paths verbatim, no articles.
+1. **What changed** — terse: identifiers/file paths verbatim, no articles.
 2. **Why** — root cause or contract being honored. This is the part that turns the commit from a checklist into a record.
 
 Wrap body lines at ~72 chars (commitlint enforces 100). For multi-line bullets, indent continuation lines with 2 spaces:
@@ -397,7 +394,7 @@ For `dismissed` / `skipped` threads — do NOT include them in the commit body (
 
 Hard rules:
 - Subject must match the regex `^fix: PR review fixes \(round [0-9]+\) — #[0-9]+$` — the round-counting grep above relies on it.
-- Body bullets stay caveman-full: drop articles, fragments OK, identifiers verbatim. Same convention as the `pull-request` skill.
+- Body bullets stay terse: drop articles, fragments OK, identifiers verbatim.
 - No marketing prose. No "Co-Authored-By: Claude". No "Generated with Claude Code" footer.
 
 Push the commit:
@@ -410,11 +407,11 @@ If push fails (no upstream, protected branch, etc.), stop. Do not proceed to rep
 
 Capture the commit SHA.
 
-## Step 5 — Reply per thread (caveman-full)
+## Step 5 — Reply per thread (terse)
 
 For each `fixed` thread, post a reply via REST `/repos/<org>/<repo>/pulls/<n>/comments` with `in_reply_to=<comment_databaseId>`.
 
-Reply body in **caveman-full**:
+Reply body, **terse**:
 - Drop articles, filler, hedging.
 - Fragments OK, short synonyms.
 - Pattern: `Fixed in <SHA>. <what changed>. <why>.`
@@ -431,7 +428,7 @@ Fixed in 0c52e4203. Same `Boolean(...)` gate applied to common `BonusDetailItem`
 Fixed in adffe7ab2. Chevron extracted to `RowChevron` sibling, no longer inside `<Link>`. `<a>` cannot contain `<button>` per HTML spec.
 ```
 
-For each `skipped` thread, post a short caveman reply that explains *why* this isn't being fixed in this PR. Keep it specific — generic "Out of scope" alone is lazy when the thread asks something concrete.
+For each `skipped` thread, post a short terse reply that explains *why* this isn't being fixed in this PR. Keep it specific — generic "Out of scope" alone is lazy when the thread asks something concrete.
 
 Pattern: `<verdict>. <one-line reason or follow-up>.`
 
@@ -456,7 +453,7 @@ Hard rules:
 - Do NOT solicit a human decision ("let me know if…", "open if you want…") — the thread will be **resolved** in Step 6.
 - Do NOT default to "Out of scope" when a more accurate reason is one beat away.
 
-For each `dismissed` thread, post a reply citing the verifying evidence (still caveman):
+For each `dismissed` thread, post a reply citing the verifying evidence (still terse):
 
 ```
 Dismissed. <reason from fix-pr-thread>. <verifying file:line>.
@@ -479,7 +476,7 @@ mutation($id: ID!) {
 }' -f id="<threadId>"
 ```
 
-For `skipped` threads: also resolve. Never leave a thread open for a human — the caveman "Out of scope" reply is the record. If the deferred item matters, the reviewer will reopen or file a follow-up issue.
+For `skipped` threads: also resolve. Never leave a thread open for a human — the terse "Out of scope" reply is the record. If the deferred item matters, the reviewer will reopen or file a follow-up issue.
 
 ## Step 7 — Summary
 
@@ -506,6 +503,15 @@ rm -rf "$LOCKDIR"
 ```
 
 This is the normal-completion release. Halt paths (Step 0e dirty worktree, Step 3c verify failure, Step 4 push failure) and the "Nothing to do" exit must each release the lock too.
+
+## Scheduling rounds (`/loop`)
+
+Review bots regularly land new findings 8–15 min after a commit, so one round is never the end. After Step 7 (and after any halt that should be retried), make sure a loop is running:
+
+- If this round was started by a `/loop` firing, do nothing — the next firing is already scheduled.
+- Otherwise invoke the `loop` skill: `/loop 15m /core:resolve-pr-comments <PR_URL>`. 15 minutes is the floor; shorter intervals silently miss the bot's second pass.
+
+The loop ends when a round exits with "Nothing to do" after two consecutive quiet rounds (see § Edge cases): print `Loop complete — stop the /loop for PR #<N>` so the user (or the loop runner) can stop it.
 
 ## Notifications
 
@@ -542,40 +548,41 @@ Silent on Windows / headless environments — never block the flow.
 
 ## Edge cases
 
-- **No unresolved threads — but only after TWO consecutive quiet rounds:** Cursor Bugbot regularly lands new findings 8–15 min after the latest commit, so a single "Nothing to do" tick is inconclusive. The first time threads drop to zero unresolved: print the summary noting "no unresolved this round" and `ScheduleWakeup` once more at the normal cadence. ONLY exit the loop (print "Nothing to do", fire loop-completion notification, remove the worktree) when TWO consecutive rounds both find zero unresolved threads. This wastes one extra round per PR but reliably catches late-arriving comments. (No explicit lock release needed on worktree removal — the worktree's `.git/` is gone with it.)
+- **No unresolved threads — but only after TWO consecutive quiet rounds:** review bots regularly land new findings 8–15 min after the latest commit, so a single "Nothing to do" tick is inconclusive. The first time threads drop to zero unresolved: print the summary noting "no unresolved this round" and let the `/loop` fire once more at the normal cadence. ONLY exit the loop (print "Nothing to do", fire loop-completion notification, remove the worktree) when TWO consecutive rounds both find zero unresolved threads. This wastes one extra round per PR but reliably catches late-arriving comments. (No explicit lock release needed on worktree removal — the worktree's `.git/` is gone with it.)
 - **All threads outdated:** print summary noting all were outdated, fire loop-completion notification, remove the worktree, exit without committing.
 - **Verification fails after fixes:** halt before commit. Print which check failed and the file:line. Fire the verification-failure notification. Release lock (`rm -rf "$LOCKDIR"`). Do NOT push, reply, resolve, or remove the worktree — leave it for the user to inspect.
 - **Push fails (protected branch, no upstream):** halt before reply/resolve. Fire the push-failure notification. Release lock. Tell the user; await direction. Leave the worktree intact.
 - **Worktree dirty before start (Step 0e):** stop and ask. Don't bury unrelated changes in the round commit. Release lock.
-- **Lock already held (Step 0f):** another round is in progress. Soft-skip — `exit 0` without releasing the lock (the holder owns it). Next `ScheduleWakeup` retries. Stale locks (>30 min old) are auto-reaped at lock acquisition.
+- **Lock already held (Step 0f):** another round is in progress. Soft-skip — `exit 0` without releasing the lock (the holder owns it). The next `/loop` firing retries. Stale locks (>30 min old) are auto-reaped at lock acquisition.
 - **HEAD on `main`/`develop` in worktree:** stop. Never commit/push to those. Release lock.
 - **`.worktrees/` not git-ignored:** add `.worktrees/` to `.gitignore` and commit it before creating the worktree.
 - **Comment is the user's own (not a bot, not a teammate):** still process it the same way — author identity doesn't change the protocol.
 - **Multiple bot comments saying the same thing on the same line:** treat as one fix; reply on each thread but the fix only happens once.
-- **Loop use case (ScheduleWakeup):** worktree persists between rounds — reuse it (Step 0c detects it). The round counter (`$GITDIR/resolve-pr-round`) and lock dir live inside the worktree's git dir, so they too persist across rounds and disappear with the worktree. Only remove after "Nothing to do".
+- **Loop use case (`/loop`):** worktree persists between rounds — reuse it (Step 0c detects it). The round counter (`$GITDIR/resolve-pr-round`) and lock dir live inside the worktree's git dir, so they too persist across rounds and disappear with the worktree. Only remove after "Nothing to do".
 
 ## Example invocation flow
 
 ```
-User: /resolve-pr-comments https://github.com/acme/webapp/pull/1701
+User: /core:resolve-pr-comments https://github.com/acme/webapp/pull/1701
 ```
 
 **Round 1 (first call):**
-0. Branch → `fix/wallet-bonus-error`. Create `.worktrees/pr-1701`, fetch branch, `pnpm install`.
+0. Branch → `fix/wallet-bonus-error`. Create `.worktrees/pr-1701`, fetch branch, `<PM> install`.
 1. Parse → `org=acme`, `repo=webapp`, `pr=1701`.
 2. Fetch threads → 5 unresolved (cursor ×2, claude ×2, coderabbit ×1).
 3. Group by path → 3 paths. Dispatch 3 parallel agents (working inside `.worktrees/pr-1701`).
 4. All agents return `fixed` except coderabbit's `aria-expanded` → skipped.
-5. Run `pnpm tsc --noEmit && pnpm biome check && pnpm vitest run` inside worktree — green.
+5. Run the detected typecheck, lint and test scripts inside the worktree — green.
 6. Stage, commit, push from worktree.
 7. Reply, resolve. Print summary.
-8. ScheduleWakeup 15 min (delaySeconds: 900) — Bugbot review latency runs 8–15 min on real commits, so shorter waits silently miss its second-pass findings. Do NOT undercut this with prompt-cache heuristics; the cache miss is cheaper than another empty round..
+8. Start `/loop 15m /core:resolve-pr-comments https://github.com/acme/webapp/pull/1701` — bot review latency runs 8–15 min on real commits, so shorter waits silently miss its second-pass findings.
 
-**Round 2 (ScheduleWakeup fires):**
-0. `.worktrees/pr-1701` already exists → reuse. Skip `pnpm install`.
+**Round 2 (`/loop` fires):**
+0. `.worktrees/pr-1701` already exists → reuse. Skip `<PM> install`.
 2. Fetch threads → 2 new unresolved.
-... fix, commit, push, reply, resolve, schedule next round.
+... fix, commit, push, reply, resolve; the loop fires again.
 
-**Final round:**
-2. Fetch threads → 0 unresolved.
-→ "Nothing to do." Remove worktree: `git worktree remove --force .worktrees/pr-1701`. Exit.
+**Final rounds:**
+2. Fetch threads → 0 unresolved (first quiet round). Print summary, let the loop fire once more.
+2. Fetch threads → 0 unresolved (second quiet round).
+→ "Nothing to do." Remove worktree: `git worktree remove --force .worktrees/pr-1701`. Print `Loop complete — stop the /loop for PR #1701`. Exit.

@@ -1,23 +1,33 @@
 #!/bin/bash
-# PostToolUse hook — surface TypeScript errors after file edits.
-#
-# Fires only when:
-#   1. The edited file is a .ts or .tsx file
-#   2. A tsconfig.json exists in the project root
-#
-# Produces zero output when there are no errors (no context pollution).
-# Uses --incremental to avoid cold-starting the compiler on every edit.
+# PostToolUse(Edit|Write|MultiEdit) — typecheck after a .ts/.tsx edit.
+# Runs in the background (asyncRewake in hooks.json): silent on success,
+# exit 2 with the first errors on stderr wakes Claude with them.
+# Skips when the file is not TypeScript or the project has no tsconfig.
 
-FILE=$(echo "$CLAUDE_TOOL_INPUT" | python3 -c \
-  'import sys,json; d=json.load(sys.stdin); print(d.get("file_path",""))' \
-  2>/dev/null)
+set -u
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+read_hook_input
+FILE=$(hook_field '.tool_input.file_path')
+case "$FILE" in *.ts|*.tsx) ;; *) exit 0 ;; esac
 
-case "$FILE" in
-  *.ts|*.tsx)
-    if [ -f tsconfig.json ]; then
-      TSC="node_modules/.bin/tsc"
-      [ -f "$TSC" ] || TSC="npx --no-install tsc"
-      (timeout 10 $TSC --noEmit --incremental 2>&1 || true) | grep "error TS" | head -10
-    fi
-    ;;
-esac
+ROOT="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+cd "$ROOT" || exit 0
+[ -f tsconfig.json ] || exit 0
+
+# Prefer the project's own typecheck script so flags match CI.
+if [ -f package.json ] && grep -q '"typecheck"' package.json; then
+  RUN="$(pkg_exec | sed 's/ exec$/ run/; s/^npx --no-install$/npm run/; s/^bunx$/bun run/') typecheck"
+else
+  RUN="$(pkg_exec) tsc --noEmit --pretty false"
+fi
+
+OUT=$($RUN 2>&1)
+ERRORS=$(printf '%s\n' "$OUT" | grep -E 'error TS[0-9]+' | head -12)
+[ -z "$ERRORS" ] && exit 0
+
+{
+  echo "[ts-check] TypeScript errors after editing $FILE:"
+  printf '%s\n' "$ERRORS"
+  echo "Fix these before continuing."
+} >&2
+exit 2
