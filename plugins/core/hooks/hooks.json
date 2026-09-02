@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/no-push-to-main.sh" },
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/bash-safety.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/ts-check.sh" },
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/test-on-edit.sh" },
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/format-on-edit.sh" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-end.sh" }
+        ]
+      }
+    ]
+  }
+}

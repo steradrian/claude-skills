@@ -1,0 +1,14 @@
+{
+  "name": "adrian",
+  "owner": { "name": "Adrian" },
+  "description": "Adrian's Claude Code tooling. One source of truth for local config dirs and cloud sessions.",
+  "plugins": [
+    {
+      "name": "core",
+      "displayName": "Core engineering tooling",
+      "source": "./plugins/core",
+      "description": "Build/review/QA skills, specialist agents, safety hooks.",
+      "defaultEnabled": true
+    }
+  ]
+}
