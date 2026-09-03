@@ -1,6 +1,6 @@
 ---
 name: setup-claude
-description: Configure Claude Code for a new project with CLAUDE.md, rules, settings, and gitignore. Use when asked to "set up claude for this project", "configure claude code", "init claude config" or "write a CLAUDE.md".
+description: Configure Claude Code for a new project — CLAUDE.md, rules, settings and gitignore.
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---

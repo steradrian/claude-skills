@@ -1,16 +1,6 @@
 ---
 name: resolve-pr-comments
-description: >
-  Process every open review comment on a GitHub PR end-to-end: fetch all
-  unresolved threads, fix each at the source via the fix-pr-thread protocol
-  (independent files in parallel), commit the whole round as a
-  single commit, reply to each thread tersely, then resolve the
-  threads. Triggered by `/core:resolve-pr-comments <FULL_PR_URL>` or natural-
-  language phrases like "resolve all PR comments on https://github.com/...",
-  "fix and resolve the review comments on PR #1694",
-  "address every comment on this PR", "go through the bot review comments
-  and resolve them". REQUIRES a full PR URL or a PR number plus the current
-  repo's origin — derive org/repo/number from the URL, never assume.
+description: Process every open review comment on a GitHub PR — fetch unresolved threads, fix each at the source, commit the round, reply, resolve. Triggers on "resolve all PR comments", "address every comment on this PR", "go through the bot review comments". REQUIRES a full PR URL or number plus the repo origin.
 argument-hint: <PR URL or #number>
 ---
 

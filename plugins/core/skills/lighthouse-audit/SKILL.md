@@ -1,7 +1,6 @@
 ---
 name: lighthouse-audit
-description: >
-  Run a full Lighthouse audit on a local page (production build), generate a structured improvement plan, apply fixes to the code, then re-audit and compare scores. This is the heavyweight pass — it builds, serves, and runs Lighthouse three times per audit. Use it when the user explicitly asks to "run lighthouse", for a "full lighthouse audit", for "lighthouse scores", for a before/after Lighthouse comparison, or to "improve my Lighthouse scores". For a quick perf check with no Lighthouse run, use /core:lighthouse-audit-light instead.
+description: Full Lighthouse pass on a local production build — audit, plan, apply fixes, re-audit, compare. For a quick perf check with no Lighthouse run, use /core:lighthouse-audit-light instead.
 disable-model-invocation: true
 ---
 

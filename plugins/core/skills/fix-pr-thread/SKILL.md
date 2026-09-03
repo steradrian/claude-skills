@@ -1,15 +1,6 @@
 ---
 name: fix-pr-thread
-description: >
-  Per-thread fix protocol for GitHub PR review comments. Bulletproof companion
-  to resolve-pr-comments. Reads the full file and the full thread (all
-  comments, not just the first), decides fix/skip/dismiss, applies a minimal
-  scope-bounded edit, returns a structured result. Same-file threads are
-  processed sequentially by ONE agent; different files run in parallel ONLY
-  at scale (≥3 paths). No orchestrator phase, no "fix all occurrences," no
-  external doc lookup, no background dispatch by default. Designed to eliminate
-  the failure modes listed under "Failure mode coverage" below. Internal —
-  invoked by resolve-pr-comments, not typed by the user.
+description: Per-thread fix protocol for one GitHub PR review thread — read it whole, decide fix/skip/dismiss, apply a minimal edit. Internal — invoked by resolve-pr-comments, not typed by the user.
 disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 ---

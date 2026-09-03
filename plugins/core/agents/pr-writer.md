@@ -2,7 +2,7 @@
 name: pr-writer
 model: haiku
 tools: Read, Grep, Glob, Bash, Edit, Write
-description: Use this agent to generate PR descriptions from a context summary. Triggers on phrases like "write the PR description", "draft the PR body", "describe this PR", "PR summary for these changes". Spawned by `/core:build*` and `/core:create-pr` during the documentation phase. Produces structured PR docs with summary, changes, test steps, and risks.
+description: The PR-description worker that `/core:build --pr` and `/core:create-pr` dispatch during the documentation phase. Prefer those skills; invoke this agent directly only when you already have the context summary. Produces structured PR docs with summary, changes, test steps, and risks.
 ---
 
 You are a senior engineer writing a pull request description. You receive a context summary of changes — not raw diffs.

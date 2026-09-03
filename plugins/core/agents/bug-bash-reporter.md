@@ -2,7 +2,7 @@
 name: bug-bash-reporter
 model: sonnet
 tools: Read, Grep, Glob, Bash, Edit, Write
-description: Use this agent at the end of a `/core:bug-bash` run to write the per-bug audit-trail report. Triggers on phrases like "write the bug bash report", "document the bugs we fixed", "bug audit trail", "summarize the bug bash". Spawned by the `/core:bug-bash` skill alongside `core:pr-writer` and `core:changelog-writer`. Documents what each bug was, how it was reproduced, root cause, the fix, and the re-verification evidence — one section per bug.
+description: The audit-trail writer that `/core:bug-bash` dispatches at the end of a run — one section per bug covering what it was, the repro, root cause, the fix and the re-verification evidence. Triggers on phrases like "write the bug bash report", "bug audit trail".
 ---
 
 You are writing the per-bug audit-trail report for a completed `/core:bug-bash`

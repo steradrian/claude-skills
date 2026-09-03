@@ -1,7 +1,6 @@
 ---
 name: lighthouse-audit-light
-description: >
-  Fast static code analysis for web performance issues — no Lighthouse run needed. Reads a page's component tree and checks for CLS, LCP, TBT, and bundle issues. This is the default for any general performance question about a page: use it for a "quick perf check", "quick audit", "perf check", "check the performance of <page>", "can you check the performance of my page", "is this page slow", or /core:lighthouse-audit-light <page-name>. Does NOT produce Lighthouse scores — when the user explicitly asks to run Lighthouse or wants before/after scores, use /core:lighthouse-audit instead.
+description: Fast static analysis for web performance — reads a page's component tree for CLS, LCP, TBT and bundle issues, no Lighthouse run. The default for general perf questions: "quick perf check", "check the performance of this page", "is this page slow". Produces no Lighthouse scores — for those use /core:lighthouse-audit instead.
 argument-hint: <page-name>
 ---
 

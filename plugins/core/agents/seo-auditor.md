@@ -2,7 +2,7 @@
 name: seo-auditor
 model: sonnet
 tools: Read, Grep, Glob, Bash, WebFetch
-description: Use this agent to audit SEO, meta tags, structured data, and discoverability. Triggers on phrases like "audit SEO", "check meta tags", "improve SEO for", "add structured data", "Open Graph tags", "check crawlability", "SEO review". Returns prioritized fixes with exact implementation.
+description: Use this agent to audit SEO, meta tags, structured data and discoverability. Triggers on phrases like "audit SEO", "check meta tags", "add structured data". Returns prioritized fixes with exact implementation.
 ---
 
 You are a senior SEO engineer auditing web applications for search visibility and social sharing.

@@ -1,6 +1,6 @@
 ---
 name: web-design-taste
-description: Design or critique MARKETING and editorial pages — landing pages, portfolios, brand sites — against measured technique from award-calibre work. Use when asked to "design a landing page", "make this look designed", "why does this look AI-generated", "critique this marketing page", "pick a design direction", or when a page reads as generic/templated. NOT for dashboards or tool UI — use web-design-guidelines for those.
+description: Design or critique MARKETING and editorial pages — landing pages, portfolios, brand sites — against measured technique from award-calibre work. Triggers on "design a landing page", "why does this look AI-generated", "critique this marketing page". NOT for dashboards or tool UI — use web-design-guidelines for those.
 metadata:
   version: '1.1.0'
   benchmark: 'mariajoaoabrantes.work · sondaven.com · oryzo.ai · kriss.ai · silencio.es'

@@ -1,6 +1,6 @@
 ---
 name: fix-reviewer
-description: Use this agent after a bug fix is applied but before re-verify (spawned by `/core:bug-bash`, or on demand). Triggers on phrases like "review this fix", "is this a real fix or a band-aid", "does this actually kill the bug", "root cause review", "check if this masks the bug". Reviews the fix as a senior engineer who didn't write it — constructs adversarial "what if" scenarios, traces each through the code, runs the patch-or-fix audit (cause vs symptom), and returns blockers/concerns/verdict. Different from `core:pr-reviewer`: focuses on whether the fix actually kills the bug and where it could ghost back from.
+description: Use this agent after a bug fix is applied but before re-verify. Triggers on phrases like "is this a real fix or a band-aid", "does this actually kill the bug", "check if this masks the bug". Runs an adversarial cause-vs-symptom audit. Different from `core:pr-reviewer`: judges whether the fix kills the bug and where it could ghost back from.
 model: opus
 tools: Read, Grep, Glob, Bash, WebFetch
 ---

@@ -1,13 +1,6 @@
 ---
 name: bug-bash
-description: >
-  Multi-bug fix orchestrator. Takes a list of bugs (file path or inline)
-  and runs repro → root-cause → fix → review → re-verify per bug, end to
-  end. Handles upstream-package fixes via local link. The orchestrator
-  drives the browser; spawns `core:bug-investigator` for code-side root
-  cause, `core:fix-reviewer` as the gate on every fix, and documentation
-  agents at the end. Triggered by "work through this bug list", "fix and
-  verify these N bugs", "run the bug bash on docs/bugs/list.md".
+description: Work through a list of bugs end to end — repro, root cause, fix, review and re-verify each one, driving the browser as it goes.
 argument-hint: <bug list path or inline list>
 disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Agent, mcp__playwright__*, mcp__claude-in-chrome__*

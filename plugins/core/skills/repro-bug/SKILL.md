@@ -1,11 +1,6 @@
 ---
 name: repro-bug
-description: >
-  Reproduce a single reported bug locally in the browser, capture
-  evidence, and write a paste-ready bug ticket. The orchestrator drives
-  Playwright MCP directly. Triggered by "reproduce this bug", "see if you
-  can repro X", "is this still broken in the current build", "turn this
-  report into a ticket".
+description: Reproduce one reported bug locally in the browser, capture evidence, and write a paste-ready bug ticket.
 argument-hint: <bug description, report excerpt, or URL>
 disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Agent, mcp__playwright__*, mcp__claude-in-chrome__*

@@ -1,11 +1,6 @@
 ---
 name: explore
-description: >
-  Time-boxed exploratory testing of a feature, page, or flow. Curious-user
-  mode — looks for bugs, UX smells, dead ends. No fixed matrix, no specific
-  bug to reproduce — just kick the tires. Triggered by "explore this
-  feature", "be a curious user in X", "kick the tires on Y", "look for
-  bugs in the editor".
+description: Time-boxed exploratory testing of a feature, page or flow in curious-user mode — no matrix, no named bug, just kick the tires and report bugs, UX smells and dead ends.
 argument-hint: <page, route, or flow to explore> [--minutes N | --findings N]
 disable-model-invocation: true
 allowed-tools: Read, Write, Bash, Glob, Grep, mcp__playwright__*, mcp__claude-in-chrome__*

@@ -1,0 +1,9 @@
+{
+  "name": "deposit-app",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Fixture repo for the core:review eval case.",
+  "scripts": {
+    "typecheck": "node --check src/hooks/use-deposit.js"
+  }
+}

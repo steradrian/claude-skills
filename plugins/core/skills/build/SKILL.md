@@ -1,6 +1,6 @@
 ---
 name: build
-description: Execute the complete feature development workflow (investigate, plan, implement, test, gate, review, verify, document) for a described feature or fix. Use when asked to "build", "implement", "ship" or "finish" something end to end. Flags select the architecture pass (--arch), maximum rigor (--max) or the post-implementation phases only (--finish).
+description: Run the full feature workflow end to end — investigate, plan, implement, test, gate, review, verify, document. Flags pick the architecture pass, maximum rigor, or the finishing phases only.
 argument-hint: "[--arch] [--max] [--finish] [--pr] [--changelog] <feature description>"
 disable-model-invocation: true
 ---

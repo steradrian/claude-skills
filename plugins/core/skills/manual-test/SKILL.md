@@ -1,17 +1,6 @@
 ---
 name: manual-test
-description: >
-  Senior manual-tester driving a real browser end-to-end against the local
-  dev environment for the current branch / PR. Indexes every feature in the
-  change-set, builds a tiered test matrix (golden / coverage / edge), then
-  drives Playwright MCP through it — clicking, typing, watching console +
-  network, screenshotting every assertion. `--matrix <path>` runs a
-  pre-written, version-controlled matrix instead of generating one — the
-  repeatable smoke pass. Designed for changes whose failure modes are invisible to
-  `tsc`, unit tests and `next build`: multi-step user flows, third-party
-  integrations, async behavior. Triggered by "manually test this PR
-  end-to-end", "be my QA agent", "test every flow in the browser", "smoke
-  test the app", "is anything obviously broken".
+description: Drive a real browser through the current branch or PR — index the changed features, build a tiered test matrix, click through it with evidence. `--matrix` runs a saved matrix instead.
 argument-hint: '[PR_URL | "current branch"] [--matrix <path>]'
 disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Agent, mcp__playwright__*, mcp__claude-in-chrome__*

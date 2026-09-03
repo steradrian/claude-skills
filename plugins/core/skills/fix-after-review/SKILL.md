@@ -1,6 +1,6 @@
 ---
 name: fix-after-review
-description: Apply selected findings from a local review report (/core:review, /core:panel-review, or a pasted review) one at a time, each with a minimal scope-bounded fix and its relevant test. Use when asked to "fix findings 1,2,6", "apply the review fixes", "fix the red items" or "address the review findings".
+description: Apply chosen findings from a local review report (/core:review, /core:panel-review, or a pasted one) one at a time, each as a minimal scope-bounded fix with its test.
 argument-hint: <finding indices, e.g. 1,2,6>
 disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash

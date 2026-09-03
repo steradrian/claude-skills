@@ -1,17 +1,6 @@
 ---
 name: spec-from-prototype
-description: >
-  Take a prototype description (path, link, screenshot, or free-text
-  pitch) and produce a complete product spec end-to-end: narrative,
-  user flows, roadmap, tickets, and an explicit Assumptions Register.
-  Runs the product-manager agent for a first draft, then three critic
-  agents in parallel (UX, engineering, business), then a second
-  product-manager pass to reconcile feedback. The agent makes every
-  judgment call itself — it does NOT ask the user questions during
-  the run. Every ambiguity becomes a numbered assumption the user
-  reviews at the end. Triggered by `/core:spec-from-prototype <input>` or
-  natural language: "build a spec from this prototype", "turn this
-  pitch into tickets", "PO this prototype end-to-end".
+description: Turn a prototype, link, screenshot or pitch into a full product spec — narrative, flows, roadmap, tickets, assumptions — via a PM draft, parallel critics, then a reconciliation pass.
 argument-hint: <prototype path, URL, screenshot or pitch>
 disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Agent, WebFetch

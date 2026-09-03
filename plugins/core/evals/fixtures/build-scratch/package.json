@@ -1,0 +1,10 @@
+{
+  "name": "scratch-utils",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Scratch project for the core:build eval case. No dependencies, no network.",
+  "scripts": {
+    "typecheck": "node --check src/index.js",
+    "test": "node --test src/"
+  }
+}

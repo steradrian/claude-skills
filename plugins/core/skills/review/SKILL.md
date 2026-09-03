@@ -1,6 +1,6 @@
 ---
 name: review
-description: Comprehensive pre-PR code review with parallel batch agents. Triggers on "review this PR", "review my changes", "code review", "review my PR", "check my implementation", "PR review". Dispatches to core:pr-reviewer agents per file batch, then merges all findings into a unified report.
+description: Comprehensive pre-PR code review with parallel batch agents. Triggers on "review this PR", "review my changes", "check my implementation". Dispatches core:pr-reviewer per file batch, then merges every finding into one report.
 disable-model-invocation: false
 allowed-tools: Read, Glob, Grep, Agent, Bash
 ---

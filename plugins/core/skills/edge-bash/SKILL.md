@@ -1,17 +1,6 @@
 ---
 name: edge-bash
-description: >
-  Iterative edge-case-first manual testing. Before driving anything, spawn
-  a general-purpose subagent as the QA strategist to produce a
-  DOMAIN-SPECIFIC edge-case taxonomy for the feature (threat model, not
-  generic Tier A/B/C). Run scenarios in phases, append findings to a
-  `BugIndex-*.md` with severity + repro + root cause + suggested fix path,
-  then check diminishing returns — if the last phase found new bugs AND
-  the strategist can name fresh categories inspired by them, add another
-  phase. Stop when bug discovery hits zero AND no new categories suggest
-  themselves. Hand the bug index to `/core:build` for the fix pass.
-  Triggered by "stress-test the edges of this feature", "find every way
-  this can break", "iterative QA", "be a paranoid senior tester".
+description: Iterative edge-case-first manual QA — build a domain-specific edge taxonomy, test in phases until discovery dries up, and hand the resulting bug index to `/core:build`.
 argument-hint: <feature, surface, or PR to stress-test>
 disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Agent, mcp__playwright__*, mcp__claude-in-chrome__*

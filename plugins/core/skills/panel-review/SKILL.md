@@ -1,14 +1,6 @@
 ---
 name: panel-review
-description: >
-  Adversarial pre-PR review with a panel of specialized agents
-  running in parallel against the current diff. NO inter-batch dedup,
-  NO skepticism filter — every finding surfaces, the human triages.
-  Built for bugbot-style "question everything" coverage. Token-cost
-  managed via diff-scoped reads, prompt caching, no model escalation,
-  and specialist gating per file type. Triggered by `/core:panel-review`
-  or natural language: "panel review this PR", "bugbot this", "every
-  agent reviews these changes", "adversarial PR review".
+description: Adversarial pre-PR review — a panel of specialist agents run in parallel over the current diff with no dedup and no skepticism filter, so every finding reaches the human to triage.
 disable-model-invocation: true
 allowed-tools: Read, Write, Glob, Grep, Bash, Agent, AskUserQuestion
 ---

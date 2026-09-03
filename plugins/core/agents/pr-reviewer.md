@@ -1,6 +1,6 @@
 ---
 name: pr-reviewer
-description: The reviewer worker that `/core:review` and `/core:build` dispatch, one per batch of changed files. Invoke it directly only for a single file or a diff under ~100 lines; for a whole PR or branch use `/core:review`, which batches and merges the findings instead. Triggers on "have pr-reviewer look at this file", "what could go wrong with this", "play devil's advocate". Returns issues (blocking) and suggestions (non-blocking) with clear reasoning, plus an adversarial what-if pass on non-trivial diffs.
+description: The reviewer worker that `/core:review` and `/core:build` dispatch, one per batch of changed files. Invoke it directly only for a single file or a diff under ~100 lines; for a whole PR or branch use `/core:review` instead. Triggers on "have pr-reviewer look at this file", "play devil's advocate". Returns blocking issues and suggestions.
 model: opus
 tools: Read, Grep, Glob, Bash, WebFetch
 ---
