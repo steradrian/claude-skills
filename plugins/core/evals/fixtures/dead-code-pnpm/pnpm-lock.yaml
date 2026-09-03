@@ -1,0 +1,24 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      knip:
+        specifier: ^5.30.0
+        version: 5.30.0
+
+packages:
+
+  knip@5.30.0:
+    resolution: {integrity: sha512-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000==}
+    engines: {node: '>=18.6.0'}
+    hasBin: true
+
+snapshots:
+
+  knip@5.30.0: {}

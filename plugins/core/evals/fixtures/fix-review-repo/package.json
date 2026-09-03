@@ -1,0 +1,9 @@
+{
+  "name": "draft-editor",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Fixture repo for the core:fix-after-review eval case. Dependency-free so the verification step runs offline.",
+  "scripts": {
+    "typecheck": "node --check src/parse-range.js && node --check src/save-draft.js"
+  }
+}
