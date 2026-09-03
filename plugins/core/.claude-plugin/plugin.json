@@ -1,6 +1,6 @@
 {
   "name": "core",
   "description": "Portable frontend engineering tooling: build/review/QA skills, specialist agents, and safety hooks. Shared across every project and config dir.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": { "name": "Adrian" }
 }

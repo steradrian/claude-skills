@@ -1,10 +1,11 @@
 #!/bin/bash
 # SessionEnd — append a short summary to the day's log for continuity.
 # The SessionStart hook reads this file back. Honors CLAUDE_CONFIG_DIR so
-# separate personal/work configs keep separate logs.
+# separate personal/work configs keep separate logs. Uses its own directory,
+# not <config>/sessions/, which Claude Code uses for its own state files.
 
 set -u
-LOG_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/sessions"
+LOG_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/session-logs"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/$(date +%Y-%m-%d).log"
 
@@ -22,4 +23,7 @@ LOG_FILE="$LOG_DIR/$(date +%Y-%m-%d).log"
   fi
   echo
 } >> "$LOG_FILE"
+
+# Keep 30 days of logs.
+find "$LOG_DIR" -name '*.log' -mtime +30 -delete 2>/dev/null || true
 exit 0

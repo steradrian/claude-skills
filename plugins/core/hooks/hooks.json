@@ -2,6 +2,7 @@
   "hooks": {
     "SessionStart": [
       {
+        "matcher": "startup|resume",
         "hooks": [
           { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh", "timeout": 10 }
         ]
@@ -20,8 +21,8 @@
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/ts-check.sh", "asyncRewake": true, "timeout": 120 },
-          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/test-on-edit.sh", "asyncRewake": true, "timeout": 120 }
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/ts-check.sh", "asyncRewake": true, "timeout": 180 },
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/test-on-edit.sh", "asyncRewake": true, "timeout": 180 }
         ]
       }
     ],
