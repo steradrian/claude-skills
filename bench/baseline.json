@@ -1,5 +1,6 @@
 {
-  "core_always_on_tokens": 8362,
+  "core_always_on_tokens": 6138,
   "recorded": "2026-09-03",
-  "budget_always_on_tokens": 8500
+  "budget_always_on_tokens": 6400,
+  "note": "Budget tightened after the 2026-09-03 trim (8362 -> 6138). Raise it only with a reason recorded here."
 }
