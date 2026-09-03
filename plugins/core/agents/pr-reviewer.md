@@ -1,6 +1,6 @@
 ---
 name: pr-reviewer
-description: Use this agent to perform thorough code reviews on changes, PRs, or specific files. Triggers on phrases like "review this PR", "review my changes", "code review", "check my implementation", "what could go wrong with this", "play devil's advocate". Returns issues (blocking) and suggestions (non-blocking) with clear reasoning, plus an adversarial what-if pass on non-trivial diffs.
+description: The reviewer worker that `/core:review` and `/core:build` dispatch, one per batch of changed files. Invoke it directly only for a single file or a diff under ~100 lines; for a whole PR or branch use `/core:review`, which batches and merges the findings instead. Triggers on "have pr-reviewer look at this file", "what could go wrong with this", "play devil's advocate". Returns issues (blocking) and suggestions (non-blocking) with clear reasoning, plus an adversarial what-if pass on non-trivial diffs.
 model: opus
 tools: Read, Grep, Glob, Bash, WebFetch
 ---

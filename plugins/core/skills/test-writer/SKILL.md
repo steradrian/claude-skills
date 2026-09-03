@@ -1,6 +1,6 @@
 ---
 name: test-writer
-description: Entry point for test coverage — dispatches the `core:test-writer` agent for a component, hook, utility or module, then runs the tests and pastes the output. Use when asked to "write tests for", "add test coverage", "cover this with tests" or "test this hook".
+description: Entry point for test coverage — dispatches the `core:test-writer` agent (the writer worker of the same name) for a component, hook, utility or module, then runs the tests and pastes the output. Prefer this over invoking that agent directly. Use when asked to "write tests for", "add test coverage", "cover this with tests" or "test this hook".
 argument-hint: <target to test>
 ---
 

@@ -82,10 +82,12 @@ check_one() {
   args=$(printf '%s' "$part" | sed -E 's/^git.*[[:space:]]push([[:space:]]+|$)//; s/["'"'"'`)]//g')
 
   local -a refspecs=()
+  local broadcast=0
   set -f                     # no globbing while we word-split
   for t in $args; do
     case "$t" in
       --dry-run|-n) dry=1 ;;
+      --all|--mirror|--tags) broadcast=1 ;;
       -*) ;;                 # other flags (-u, --force, --set-upstream=…)
       *) if [ -z "$remote" ]; then remote="$t"; else refspecs+=("$t"); fi ;;
     esac
@@ -93,8 +95,19 @@ check_one() {
   set +f
   [ "$dry" = 1 ] && return 0
 
+  # --all / --mirror push every local branch, main included, from any branch.
+  [ "$broadcast" = 1 ] && block "'$part' pushes every branch, main/master included"
+
+  # A refspec built from a variable or substitution cannot be resolved here.
+  # Fail closed rather than guess.
+  for r in ${refspecs[@]+"${refspecs[@]}"}; do
+    case "$r" in
+      *'$'*|*'`'*) block "refspec '$r' is built from a shell expansion, so its target cannot be checked" ;;
+    esac
+  done
+
   if [ "${#refspecs[@]}" -eq 0 ] || { [ "${#refspecs[@]}" -eq 1 ] && [ "${refspecs[0]}" = "HEAD" ]; }; then
-    dir="${cdir:-.}"
+    dir="${cdir:-${CHAIN_DIR:-.}}"
     dir="${dir/#\~/$HOME}"
     current=$(git -C "$dir" symbolic-ref --short HEAD 2>/dev/null || echo "")
     case "$current" in
@@ -115,7 +128,21 @@ check_one() {
   return 0
 }
 
+# Walk the chain left to right, tracking `cd` so a later bare `git push` is
+# resolved against the directory the chain actually moved to.
+CHAIN_DIR=""
 printf '%s\n' "$CMD" | tr ';&|\n' '\n\n\n\n' | while IFS= read -r part; do
-  check_one "$part" || exit $?
+  trimmed=$(printf '%s' "$part" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')
+  case "$trimmed" in
+    cd\ *)
+      d=$(printf '%s' "$trimmed" | sed -E 's/^cd[[:space:]]+//; s/["'"'"']//g')
+      case "$d" in
+        /*) CHAIN_DIR="$d" ;;
+        \~*) CHAIN_DIR="${d/#\~/$HOME}" ;;
+        *) CHAIN_DIR="${CHAIN_DIR:-.}/$d" ;;
+      esac
+      ;;
+  esac
+  CHAIN_DIR="$CHAIN_DIR" check_one "$part" || exit $?
 done
 exit $?

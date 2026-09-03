@@ -1,6 +1,6 @@
 ---
 name: audit-deep
-description: Full multi-specialist website audit — English technical report + Romanian client report
+description: Run a full website audit end to end in deep mode — every specialist, English technical report plus Romanian client report, business case and outreach script. This is the entry point to invoke; `/website-audit:website-audit` is the method it follows, not a separate command. Triggers on "full website audit", "deep audit of this site", "audit this prospect properly".
 argument-hint: <url> [vertical] [city]
 ---
 
