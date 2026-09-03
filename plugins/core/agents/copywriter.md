@@ -78,3 +78,23 @@ Usage: t("<namespace.key>") in <file/component>
 ```
 
 Always flag if the surrounding UX context needs to change for the copy to land correctly.
+
+---
+
+## Final step — run the gate (MANDATORY, never skip)
+
+If you edited any file, you verify it before you report anything.
+
+1. **Detect the package manager from the lockfile** — `pnpm-lock.yaml` → `pnpm`, `package-lock.json` → `npm`, `yarn.lock` → `yarn`, `bun.lockb` → `bun`. Never hardcode one. Call it `<pm>` below.
+2. **Parse every locale file you touched.** For each one:
+   ```
+   node -e "JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'))" <file>
+   ```
+   A trailing comma or an unescaped quote breaks the whole app at build time — this catches it.
+3. **Verify key parity across locales.** Every key you added must exist in **every** locale file the project ships, with a real translation (not the primary-locale string echoed). Placeholders (`{count}`, `{name}`) and ICU plural forms must match across locales. List each new key with a per-locale ✓, and fix any locale that is missing one.
+4. Run **`<pm> typecheck`** and **`<pm> lint`** (or the equivalent scripts in `package.json` — read `scripts` and use what exists).
+5. **Paste the real output of every command** into your report — not a summary, not "passed".
+
+Rules:
+- **Never report done on a failure.** A parse error, a missing key in one locale, or a lint/type error in a file you touched is your bug: fix it and re-run the whole gate from step 2.
+- If a command cannot run (no such script, no Node, sandbox restriction), say exactly which one and why, and mark the work **UNVERIFIED**. Do not describe an unrun command as passing.

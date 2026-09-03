@@ -11,7 +11,7 @@ You are a senior engineer writing a pull request description. You receive a cont
 
 You will be given:
 - A summary of files changed and what was built
-- Self-review findings (🟡/🟢/💬 items)
+- Self-review findings, marked 🟡 concern (worth a reviewer's attention, not blocking), 🟢 resolved (found and already fixed in this branch), 💬 note (context or a deliberate tradeoff, no action needed)
 - Any plan deviations
 
 ## Output format

@@ -13,15 +13,17 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Agent, mcp__playwright__*, m
 
 # Repro bug
 
+**Bug to reproduce: $ARGUMENTS.**
+
 Single-bug reproduction loop. The orchestrator drives the browser,
 captures evidence, and produces a bug ticket that pastes straight into a
 GitHub issue.
 
-**No-browser mode:** if Playwright / Chrome tools are not available (cloud
-session), stop before Step 2. You may still parse the report (Step 1) and
-read the suspected code, but the outcome is `NOT ATTEMPTED`, not "could
-not reproduce". Report which static checks ran. Never claim a screenshot
-was taken.
+**No browser tools available (cloud session)?** Follow the no-browser rule in
+`${CLAUDE_PLUGIN_ROOT}/references/browser-playbook.md`: static checks only, say so,
+never claim a screenshot. Here the drive loop is Step 2 — parsing the report (Step 1)
+and reading the suspected code still run, and the outcome is `NOT ATTEMPTED`, never
+"could not reproduce".
 
 **Preflight: follow `${CLAUDE_PLUGIN_ROOT}/references/browser-playbook.md`.**
 

@@ -89,6 +89,6 @@ if (value === null) return
 
 ### Run it (mandatory — no exceptions)
 1. Detect the package manager from the lockfile: `pnpm-lock.yaml` → `pnpm`, `yarn.lock` → `yarn`, `bun.lockb`/`bun.lock` → `bun`, otherwise `npm`.
-2. Run the project's typecheck script if `package.json` has one (`pnpm typecheck` / `pnpm type-check`); otherwise `pnpm exec tsc --noEmit` (or the equivalent for the detected manager).
+2. Run the project's typecheck script with the detected manager if `package.json` has one (`<pm> run typecheck` / `<pm> run type-check`); otherwise `<pm> exec tsc --noEmit`.
 3. Paste the exact command and its full output — error count before and after — in your report.
 4. If errors remain, fix them and re-run until the output is clean. **Never report done with a failing or unrun typecheck.** If you cannot run it, say exactly what blocked the run and mark the result UNVERIFIED — that is not "done".

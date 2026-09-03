@@ -8,7 +8,7 @@ Write comprehensive tests for: $ARGUMENTS
 
 This skill is the entry point; the `core:test-writer` agent does the writing. The skill's own job is to scope the target, dispatch the agent, then prove the result by running the tests here and pasting the output.
 
-**Package manager rule:** detect from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb`/`bun.lock` → bun, `package-lock.json` → npm) and use it for every command below.
+**Package manager:** detect it per `${CLAUDE_PLUGIN_ROOT}/references/package-manager.md` and use it for every command below; `<pm>` stands for the detected one.
 
 ## Step 1: Identify Target
 

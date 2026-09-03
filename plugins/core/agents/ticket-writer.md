@@ -58,7 +58,7 @@ If there are none, write "None known." Don't pad.
 If the technical detail is substantial (e.g. a release bundling 20+ fixes), it's OK for this section to be longer than the others combined. But it must come last, and the rest of the ticket must stand on its own without it.
 
 ### Success criteria
-Checklist of what was verified before declaring done. Mix of user-facing outcomes ("Editor can schedule a publish and translation fires automatically") and engineering gates ("`pnpm test` green, `pnpm build` clean"). Each checkbox is intelligible to the PO.
+Checklist of what was verified before declaring done. Mix of user-facing outcomes ("A signed-in user's saved items appear on a second device") and engineering gates ("tests green, build clean" — name the project's actual scripts and package manager). Each checkbox is intelligible to the PO.
 
 ## Rules
 
@@ -72,34 +72,34 @@ Checklist of what was verified before declaring done. Mix of user-facing outcome
 ## Example shape (a 2-bug release)
 
 ```
-# Search box now finds posts by author name
+# Saved items now survive signing out and back in
 
 ## TL;DR
-Editors searching for posts by an author's name now get matching results — previously the search box only matched post titles. Also fixes a small bug where clicking "Clear filters" left the search query in the box.
+Items you save are now tied to your account instead of the device, so they're still there after signing out, switching phones, or clearing the browser. Also fixes a bug where tapping the save icon twice quickly left the item unsaved.
 
 ## What changed for users
 **Fixed**
-- Searching "Maria" in the post list now returns posts written by Maria, not just posts with "Maria" in the title.
-- The "Clear filters" button now also clears the search query (previously you had to delete it manually).
+- Saved items persist across sign-out and sign-in, and appear on every device you use.
+- Double-tapping the save icon no longer silently un-saves the item.
 
 **Improved**
-- Search results appear about twice as fast on lists with 1000+ posts.
+- The saved list opens noticeably faster on accounts with 200+ saved items.
 
 ## Limitations & what to watch
-- Author search is exact-prefix only — "Mar" matches "Maria" but "aria" does not.
-- Search remains case-sensitive for the post title field. Tracked separately.
+- Items saved before this release while signed out stay on that device only — they are not migrated to the account.
+- The save icon still shows its filled state optimistically; on a failed request it reverts after about a second.
 
 ## How this was verified
 - All automated tests pass (142 / 142).
-- Manually verified in the staging admin: searched "Maria" in a list of 80 posts, got the 3 expected matches.
-- Clear-filters behavior verified on three different filter combinations.
+- Manually verified on a 375px viewport: saved 3 items, signed out, signed back in, all 3 present.
+- Double-tap behavior verified on both a slow-network profile and a normal one.
 
 ## Technical details
 […short engineering section…]
 
 ## Success criteria
-- [x] Editors can find posts by author name from the search box
-- [x] Clear filters resets the search query
-- [x] `pnpm test` green; `pnpm build` clean
-- [x] Verified on staging admin
+- [x] Saved items persist across sign-out / sign-in and across devices
+- [x] Rapid double-tap on save leaves the item saved
+- [x] `<pm> test` green; `<pm> build` clean (`<pm>` = the manager detected from the lockfile)
+- [x] Verified on a real device at 375px
 ```

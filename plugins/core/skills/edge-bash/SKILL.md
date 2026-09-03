@@ -19,6 +19,8 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Agent, mcp__playwright__*, m
 
 # Edge bash
 
+**Target to stress-test: $ARGUMENTS.**
+
 Iterative edge-case-first manual QA. Spawn a strategist for the
 domain-specific edge-case taxonomy, run phases until the bug discovery
 rate goes to zero, and produce a structured bug index the `/core:build`
@@ -29,11 +31,10 @@ translation feature, surfaced 28 bugs, and shipped a coordinated fix
 bundle. What made it work: domain-specific categories + iterative
 expansion based on findings + a structured bug index.
 
-**No-browser mode:** if Playwright / Chrome tools are not available (cloud
-session), stop before Step 2. The strategist taxonomy (Step 1) can still
-be produced and is worth keeping; run the static checks that apply and
-report exactly which ran. Never claim a scenario was driven or a
-screenshot taken.
+**No browser tools available (cloud session)?** Follow the no-browser rule in
+`${CLAUDE_PLUGIN_ROOT}/references/browser-playbook.md`: static checks only, say so,
+never claim a screenshot. Here the drive loop is Step 2 — produce and keep the
+strategist taxonomy (Step 1) anyway; never claim a scenario was driven.
 
 **Preflight: follow `${CLAUDE_PLUGIN_ROOT}/references/browser-playbook.md`.**
 

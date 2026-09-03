@@ -6,7 +6,7 @@ allowed-tools: Read, Edit, Glob, Grep, Bash
 
 # Dead Code Cleanup
 
-**Package manager rule:** detect from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb`/`bun.lock` → bun, `package-lock.json` → npm) and use it for every command below; `<pm>` stands for the detected one.
+**Package manager:** detect it per `${CLAUDE_PLUGIN_ROOT}/references/package-manager.md` and use it for every command below; `<pm>` stands for the detected one.
 
 ## Workflow
 

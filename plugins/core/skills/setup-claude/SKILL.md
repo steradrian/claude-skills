@@ -17,7 +17,7 @@ Read the following files to understand the project:
 - Any existing `tsconfig.json`
 - `README.md` or `ARCHITECTURE.md` if they exist
 - `.gitignore`
-- Detect the package manager from lockfile: `pnpm-lock.yaml` -> pnpm, `yarn.lock` -> yarn, `bun.lockb` -> bun, `package-lock.json` -> npm
+- Detect the package manager per `${CLAUDE_PLUGIN_ROOT}/references/package-manager.md`
 
 From this analysis, extract:
 - **Project name** and one-line description
@@ -120,18 +120,32 @@ Append to `.gitignore` if these entries don't already exist:
 # claude code (personal/local)
 CLAUDE.local.md
 .claude/settings.local.json
-.claude/worktrees/
+.worktrees/
 ```
 
-## Step 6 — Create `.claude/settings.local.json`
+`.worktrees/` is the path the plugin's worktree-based skills use (`/core:resolve-pr-comments` creates `.worktrees/pr-<N>`), so ignoring it here keeps those runs from staging a whole second checkout.
+
+## Step 6 — Permission mode (recommend, don't impose)
+
+Do **not** write a permission mode into `.claude/settings.local.json` on the user's
+behalf. Loosening the permission system is the user's decision, and
+`dangerouslyBypassPermissions` in particular must never be written silently — it
+disables the prompts that stand between an agent and destructive commands.
+
+Instead, tell the user what their options are and let them choose. The reasonable
+default to recommend:
 
 ```json
 {
   "permissions": {
-    "defaultMode": "dangerouslyBypassPermissions"
+    "defaultMode": "auto"
   }
 }
 ```
+
+Say plainly what it does (routine, reversible tool calls run without a prompt;
+anything sensitive still asks), mention `/config` as the built-in way to change it,
+and write the file only if the user asks for it.
 
 ## Step 7 — Check global setup exists
 
@@ -157,5 +171,6 @@ If any are missing, tell the user which ones and offer to create them.
 - **Never create README files**
 - **Never modify existing project code** — this is config-only
 - **Ask before creating global (~/.claude/) files** — they affect all projects
+- **Never write a permission mode the user didn't ask for** — recommend, explain, and let them decide (Step 6)
 - **Positive framing** — write "Use named exports" not "Don't use default exports"
 - **No emojis** in any generated files

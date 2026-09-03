@@ -13,6 +13,9 @@ allowed-tools: Read, Write, Bash, Glob, Grep, mcp__playwright__*, mcp__claude-in
 
 # Explore
 
+**Target to explore: $ARGUMENTS** (also carries any `--minutes N` / `--findings N`
+budget — parse it out of the same string).
+
 Open-ended browser exploration. The point is what you find when nobody
 told you what to look for: empty states nobody designed, error messages
 nobody worded, layouts that break at one specific size, focus lost on
@@ -22,10 +25,10 @@ Different from `/core:manual-test` (matrix-driven, branch-aware) and
 `/core:repro-bug` (specific known bug). Use this when "test it" is too
 vague and a curious user is the right tool.
 
-**No-browser mode:** if Playwright / Chrome tools are not available (cloud
-session), stop before Step 2. There is no static substitute for
-exploration — say so, list any checks you did run, and never claim a
-finding was observed or a screenshot taken.
+**No browser tools available (cloud session)?** Follow the no-browser rule in
+`${CLAUDE_PLUGIN_ROOT}/references/browser-playbook.md`: static checks only, say so,
+never claim a screenshot. Here the drive loop is Step 2 — and there is no static
+substitute for exploration, so say that too rather than substituting a code read.
 
 **Preflight: follow `${CLAUDE_PLUGIN_ROOT}/references/browser-playbook.md`.**
 

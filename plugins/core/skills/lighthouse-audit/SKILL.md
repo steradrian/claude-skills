@@ -1,12 +1,16 @@
 ---
 name: lighthouse-audit
 description: >
-  Run a full Lighthouse audit on a local dev page, generate a structured improvement plan, apply fixes to the code, then re-audit and compare scores. Use this skill whenever the user wants to audit a page for performance, accessibility, SEO, or best practices; wants to improve Lighthouse scores; mentions LCP, CLS, TBT, FCP, or Core Web Vitals; asks for a performance or accessibility report; or says anything like "run lighthouse", "audit this page", "improve my scores", "check my web vitals", or "performance audit". Trigger even for partial requests like "can you check the performance of my page?" — the user doesn't have to say "lighthouse" explicitly.
+  Run a full Lighthouse audit on a local page (production build), generate a structured improvement plan, apply fixes to the code, then re-audit and compare scores. This is the heavyweight pass — it builds, serves, and runs Lighthouse three times per audit. Use it when the user explicitly asks to "run lighthouse", for a "full lighthouse audit", for "lighthouse scores", for a before/after Lighthouse comparison, or to "improve my Lighthouse scores". For a quick perf check with no Lighthouse run, use /core:lighthouse-audit-light instead.
+disable-model-invocation: true
 ---
 
 # Lighthouse Audit Skill
 
-A complete end-to-end workflow: branch → audit → plan → fix → re-audit → compare.
+A complete end-to-end workflow: audit → plan → fix → re-audit → compare.
+
+This skill never creates a branch and never commits. Fixes land in the working tree;
+the run ends by reporting the diff, and the user decides on the commit.
 
 ---
 
@@ -14,18 +18,17 @@ A complete end-to-end workflow: branch → audit → plan → fix → re-audit �
 
 Ask the user for these in a **single message** before doing anything:
 
-1. **Base branch** — which branch to branch from (e.g. `main`, `develop`)
-2. **Page path** — the route to audit (e.g. `/my-page`, `/products`, `/`)
-3. **Device preset** — `mobile` or `desktop`
-4. **Fix scope** — should you apply fixes automatically, or just produce the plan?
+1. **Page path** — the route to audit (e.g. `/my-page`, `/products`, `/`)
+2. **Device preset** — `mobile` or `desktop`
+3. **Fix scope** — should you apply fixes automatically, or just produce the plan?
 
-Do not proceed until you have all four answers.
+Do not proceed until you have all three answers.
 
 > **Production build is mandatory.** Dev servers include HMR scripts, unminified bundles, source maps, and extra logging that inflate TBT and page weight by 20–50 points. This skill always builds and serves a production build before auditing.
 
 ### Build and serve production
 
-Detect the package manager from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb` → bun, `package-lock.json` → npm). Then:
+Detect the package manager per `${CLAUDE_PLUGIN_ROOT}/references/package-manager.md`; `<pm>` below stands for the detected one. Then:
 
 ```bash
 # Build production bundle
@@ -54,18 +57,19 @@ kill $PROD_PID 2>/dev/null
 
 ---
 
-## Step 1: Branch
+## Step 1: Working-tree check
+
+Do **not** create a branch and do **not** commit anything in this run. Fixes are applied
+to the working tree as it stands, and the user decides what to do with the diff.
 
 ```bash
-git fetch origin
-git checkout <base-branch>
-git pull origin <base-branch>
-git checkout -b fix/lighthouse-<kebab-page-name>
+git status --short
 ```
 
-`<kebab-page-name>` is derived from the URL path (e.g. `/products/detail` → `products-detail`). If the path is `/` or empty, use `home`.
-
-Confirm the branch name to the user before continuing.
+If the tree already has uncommitted changes, say so and confirm with the user before
+applying fixes — otherwise the Lighthouse diff and their in-flight work become
+indistinguishable. If they want a clean slate, it is their call to stash, commit, or
+branch first.
 
 ---
 
@@ -169,14 +173,10 @@ fs.copyFileSync(\`lighthouse-before-run\${median.n}.report.html\`, 'lighthouse-b
 
 Tell the user which run was selected as median and what the three scores were, so they can see the variance. Delete the non-median run files to keep the repo clean.
 
-> **Device preset**: use `--preset=desktop` or `--form-factor=mobile` flags. See `references/lighthouse-flags.md` for exact flags per device.
+> **Device preset**: use `--preset=desktop` or `--form-factor=mobile` flags. See `${CLAUDE_PLUGIN_ROOT}/skills/lighthouse-audit/references/lighthouse-flags.md` for exact flags per device.
 
-Commit:
-
-```bash
-git add lighthouse-before.json lighthouse-before.html
-git commit -m "chore: add pre-fix Lighthouse audit (before, median of 3 runs)"
-```
+Leave `lighthouse-before.json` and `lighthouse-before.html` in the working tree as
+untracked artifacts. Do not `git add` or commit them — tell the user where they are.
 
 ### 2e. Lighthouse version — audit key mapping
 
@@ -249,7 +249,7 @@ Also extract and display the key Performance diagnostics:
 > document.head.appendChild(script);
 > script.onload = () => webVitals.onINP(console.log, { reportAllChanges: true });
 > ```
-> Then interact with the page (click buttons, open menus, type in inputs). Each interaction logs its INP value. Target: **≤ 200ms**. See `references/fix-patterns.md` for INP-specific fixes.
+> Then interact with the page (click buttons, open menus, type in inputs). Each interaction logs its INP value. Target: **≤ 200ms**. See `${CLAUDE_PLUGIN_ROOT}/skills/lighthouse-audit/references/fix-patterns.md` for INP-specific fixes.
 
 ### 2g. Third-party script impact (A/B audit)
 
@@ -300,7 +300,7 @@ console.log('3rd party cost:     ', diff > 0 ? '+' + diff.toFixed(1) : diff.toFi
 "
 ```
 
-Report the third-party cost to the user. If the score difference is **≥ 5 points**, call it out explicitly in the fix plan under a dedicated "Third-party scripts" section. The fix recommendations in `references/fix-patterns.md` cover facade patterns and loading strategies.
+Report the third-party cost to the user. If the score difference is **≥ 5 points**, call it out explicitly in the fix plan under a dedicated "Third-party scripts" section. The fix recommendations in `${CLAUDE_PLUGIN_ROOT}/skills/lighthouse-audit/references/fix-patterns.md` cover facade patterns and loading strategies.
 
 ### 2h. Bundle analysis (Next.js projects only)
 
@@ -358,6 +358,8 @@ Include oversized routes and unused deps in the fix plan (Step 3).
 
 ---
 
+## Step 3: Generate the fix plan
+
 Read `lighthouse-before.json`. Focus on audit items with `score < 0.9` and `details.type` that has actionable data (opportunities, diagnostics, table).
 
 Also incorporate findings from Step 2h (oversized routes, unused deps) if applicable.
@@ -372,7 +374,7 @@ Group findings into a structured plan. For each issue:
 - **Safety level**: `[safe]`, `[verify]`, or `[review]` (see below)
 - **How to fix**: concrete, code-level instruction
 
-See `references/fix-patterns.md` for common fix patterns by category.
+See `${CLAUDE_PLUGIN_ROOT}/skills/lighthouse-audit/references/fix-patterns.md` for common fix patterns by category.
 
 ### Impact priority (from Vercel Engineering research)
 
@@ -406,7 +408,7 @@ Before finalizing the plan, read the project's `next.config.js` or `next.config.
 | `compress` | Should be `true` (default, but verify not disabled) | varies |
 | `experimental.inlineCss` | Consider `true` for CSS render-blocking elimination | FCP improvement |
 
-See `references/fix-patterns.md` § "Next.js Config Catalog" for details.
+See `${CLAUDE_PLUGIN_ROOT}/skills/lighthouse-audit/references/fix-patterns.md` § "Next.js Config Catalog" for details.
 
 ### Output format
 
@@ -456,7 +458,7 @@ If fix scope was already set to "just the plan", stop here and remind the user t
 
 ## Step 4: Apply fixes (batch by safety level)
 
-Read `references/fix-patterns.md` before applying fixes — it contains proven patterns for common issues.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/lighthouse-audit/references/fix-patterns.md` before applying fixes — it contains proven patterns for common issues.
 
 Apply fixes in three batches, running a quick verification build between each. This catches regressions early and measures incremental impact.
 
@@ -473,11 +475,7 @@ After all safe fixes are applied, run a build check:
 <pm> run build 2>&1 | tail -30
 ```
 
-If the build fails, identify which fix caused it and revert that specific change. Commit the successful safe fixes:
-
-```bash
-git add -A && git commit -m "fix: lighthouse safe fixes — <summary>"
-```
+If the build fails, identify which fix caused it and revert that specific change. Leave the successful safe fixes in the working tree — do not commit them. Summarise what changed and move on to Batch 2.
 
 ### Batch 2: Verify fixes (`[verify]` label)
 
@@ -487,11 +485,7 @@ Apply `[verify]` fixes one at a time (or in small related groups). After each:
 <pm> run build 2>&1 | tail -30
 ```
 
-If the build succeeds, keep the change. If it fails or causes a regression, revert and note it in the remaining issues section.
-
-```bash
-git add -A && git commit -m "fix: lighthouse verify-level fixes — <summary>"
-```
+If the build succeeds, keep the change in the working tree. If it fails or causes a regression, revert that change and note it in the remaining issues section. Still no commits.
 
 ### Batch 3: Review fixes (`[review]` label)
 
@@ -499,11 +493,7 @@ For `[review]` fixes, **describe** the proposed change but **do not auto-apply**
 
 > "This fix requires architectural changes. Here's what I'd change: [description]. Should I proceed?"
 
-Only apply after explicit user approval.
-
-```bash
-git add -A && git commit -m "fix: lighthouse architectural fixes — <summary>"
-```
+Only apply after explicit user approval, and again only to the working tree.
 
 ---
 
@@ -535,12 +525,7 @@ done
 
 Re-run the **network diagnostics** (Step 2b) first — save the results mentally for comparison.
 
-Then repeat the same **3-run median process** from Step 2d, using `lighthouse-after-run1/2/3` as filenames. Copy the median to `lighthouse-after.json` and `lighthouse-after.html`.
-
-```bash
-git add lighthouse-after.json lighthouse-after.html
-git commit -m "chore: add post-fix Lighthouse audit (after, median of 3 runs)"
-```
+Then repeat the same **3-run median process** from Step 2d, using `lighthouse-after-run1/2/3` as filenames. Copy the median to `lighthouse-after.json` and `lighthouse-after.html`. Leave them untracked alongside the "before" pair — no commit.
 
 ---
 
@@ -615,6 +600,12 @@ When the user is satisfied or no more improvements are possible, clean up the pr
 kill $PROD_PID 2>/dev/null
 ```
 
+### Hand-off
+
+Finish by reporting the diff — `git diff --stat` plus a one-line summary per changed
+file, and the paths of the four Lighthouse artifacts. Do not branch, stage, or commit:
+**the user decides on the commit.**
+
 ---
 
 ## Error handling
@@ -625,7 +616,7 @@ kill $PROD_PID 2>/dev/null
 | Production server not responding | Check build output for errors; retry `<pm> run start` once; if still failing, report to user |
 | Lighthouse times out | Retry once with `--max-wait-for-load=60000`, then report failure |
 | No audit items found below threshold | Tell user the page is already in great shape; show scores |
-| Git branch already exists | Ask user if they want to reset it or use a different name |
+| Working tree already dirty | Say so and confirm before applying fixes — the user's in-flight changes must stay distinguishable from this run's diff |
 | Chrome not found | Tell user to install Chrome/Chromium; provide install command for their OS |
 | Port 3000 already in use | Detect with `lsof -i :3000`; ask user to free the port or use a different one |
 
@@ -633,5 +624,6 @@ kill $PROD_PID 2>/dev/null
 
 ## Reference files
 
-- `references/lighthouse-flags.md` — exact CLI flags for mobile vs desktop, throttling options
-- `references/fix-patterns.md` — proven code-level fix patterns for common Lighthouse issues
+- `${CLAUDE_PLUGIN_ROOT}/skills/lighthouse-audit/references/lighthouse-flags.md` — exact CLI flags for mobile vs desktop, throttling options
+- `${CLAUDE_PLUGIN_ROOT}/skills/lighthouse-audit/references/fix-patterns.md` — proven code-level fix patterns for common Lighthouse issues
+- `${CLAUDE_PLUGIN_ROOT}/references/package-manager.md` — lockfile → package manager detection

@@ -1,12 +1,7 @@
 ---
 name: supply-chain-risk-auditor
 description: "Identifies dependencies at heightened risk of exploitation or takeover. Use when assessing supply chain attack surface, evaluating dependency health, or scoping security engagements."
-allowed-tools:
-  - Read
-  - Write
-  - Bash
-  - Glob
-  - Grep
+allowed-tools: Read, Write, Bash, Glob, Grep
 ---
 
 # Supply Chain Risk Auditor
@@ -50,7 +45,8 @@ Ensure that the `gh` tool is available before continuing. Ask the user to instal
 You achieve your purpose by:
 
 1. Creating a `.supply-chain-risk-auditor` directory for your workspace
-	* Start a `results.md` report file based on `results-template.md` in this directory
+	* Start a `results.md` report file in that directory, based on the template at
+	  `${CLAUDE_PLUGIN_ROOT}/skills/supply-chain-risk-auditor/resources/results-template.md`
 2. Finding all git repositories for direct dependencies.
 3. Normalizing the git repository entries to URLs, i.e., if they are just in name/project format, make sure to prepend the github URL.
 
@@ -64,4 +60,4 @@ You achieve your purpose by:
 2. Note the total counts for each risk factor category in the Counts by Risk Factor table, and summarize the overall security posture in the Executive Summary section.
 3. Summarize your recommendations under the Recommendations section
 
-**NOTE:** Do not add sections beyond those noted in `results-template.md`.
+**NOTE:** Do not add sections beyond those in `${CLAUDE_PLUGIN_ROOT}/skills/supply-chain-risk-auditor/resources/results-template.md`.

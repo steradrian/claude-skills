@@ -1,7 +1,7 @@
 ---
 name: lighthouse-audit-light
 description: >
-  Fast static code analysis for web performance issues — no Lighthouse run needed. Reads a page's component tree and checks for CLS, LCP, TBT, and bundle issues. Use when the user wants a quick performance check, says "quick audit", "check performance of <page>", "perf check", or invokes /core:lighthouse-audit-light <page-name>. Does NOT replace the full /core:lighthouse-audit skill for comprehensive scoring.
+  Fast static code analysis for web performance issues — no Lighthouse run needed. Reads a page's component tree and checks for CLS, LCP, TBT, and bundle issues. This is the default for any general performance question about a page: use it for a "quick perf check", "quick audit", "perf check", "check the performance of <page>", "can you check the performance of my page", "is this page slow", or /core:lighthouse-audit-light <page-name>. Does NOT produce Lighthouse scores — when the user explicitly asks to run Lighthouse or wants before/after scores, use /core:lighthouse-audit instead.
 argument-hint: <page-name>
 ---
 
@@ -11,7 +11,7 @@ Fast, read-only performance analysis. Crawls a page's component tree and checks 
 
 **Usage:** `/core:lighthouse-audit-light <page-name>`
 
-**Package manager rule:** detect from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb`/`bun.lock` → bun, `package-lock.json` → npm); `<pm>` below stands for the detected one.
+**Package manager:** detect it per `${CLAUDE_PLUGIN_ROOT}/references/package-manager.md`; `<pm>` below stands for the detected one.
 
 ---
 
@@ -69,7 +69,7 @@ Entry: src/app/[locale]/(default)/page.tsx
 
 Run every check below against all crawled files. For `next.config` checks, read `next.config.ts` or `next.config.js` from the project root.
 
-Read `references/fix-patterns.md` for the concrete fix code to include in findings.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/lighthouse-audit/references/fix-patterns.md` for the concrete fix code to include in findings.
 
 ### Image checks
 

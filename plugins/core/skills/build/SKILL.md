@@ -2,6 +2,7 @@
 name: build
 description: Execute the complete feature development workflow (investigate, plan, implement, test, gate, review, verify, document) for a described feature or fix. Use when asked to "build", "implement", "ship" or "finish" something end to end. Flags select the architecture pass (--arch), maximum rigor (--max) or the post-implementation phases only (--finish).
 argument-hint: "[--arch] [--max] [--finish] [--pr] [--changelog] <feature description>"
+disable-model-invocation: true
 ---
 
 Execute the complete feature development workflow for: $ARGUMENTS
@@ -20,7 +21,7 @@ Parse leading flags out of `$ARGUMENTS`; everything after them is the feature de
 | `--pr` | Phase 6 also writes a PR description via `core:pr-writer`. |
 | `--changelog` | Phase 6 also writes a changelog entry via `core:changelog-writer`. |
 
-**Package manager rule:** detect from the lockfile once at the start (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb`/`bun.lock` → bun, `package-lock.json` → npm) and use it for every command below. Never hardcode one.
+**Package manager:** detect it once at the start per `${CLAUDE_PLUGIN_ROOT}/references/package-manager.md` and use it for every command below; `<pm>` stands for the detected one.
 
 ---
 
@@ -43,7 +44,8 @@ Report findings concisely: what exists, what's relevant, what's missing, which f
 
 Skipped without `--arch`/`--max`, and with `--finish`.
 
-Based on the investigation, produce a comprehensive design document:
+Based on the investigation, produce a comprehensive design document. This bullet list
+is the **design outline** — Phase 2b refers back to it rather than repeating it:
 
 - **Component breakdown** — each new/modified piece with its single responsibility
 - **Data flow** — source → transforms → destination
@@ -69,16 +71,15 @@ Skipped with `--finish`.
 
 Call the `EnterPlanMode` tool now.
 
-**Default and `--arch`:** in plan mode, produce a full implementation plan:
+**Default (no `--arch`):** in plan mode, produce a full implementation plan — an
+**Approach** section (how you'll solve this, based on the investigation findings)
+followed by the design outline from Phase 2a, minus "Risks & decisions": component
+breakdown, data flow, API contracts, state management, file structure, edge cases,
+testing strategy.
 
-- **Approach** — how you'll solve this based on investigation findings (and the approved architecture, if any)
-- **Component breakdown** — each new/modified piece with its single responsibility
-- **Data flow** — source → transforms → destination
-- **API contracts** — full request/response types for anything new
-- **State management** — where state lives, what triggers updates
-- **File structure** — exact paths for each new/modified file
-- **Edge cases** — at least 3 non-obvious scenarios and how they're handled
-- **Testing strategy** — what behavioral contracts need tests
+**`--arch`:** the architecture document already covers that outline and is approved.
+Do NOT restate it. The plan is the **Approach** section plus anything the architecture
+left open, and it cites the architecture doc for the rest.
 
 **`--max`:** the plan is grounded in the approved architecture and goes one level deeper:
 
@@ -152,7 +153,11 @@ Any failure: fix it, then re-run the whole gate from step 1. Do not proceed whil
 
 ### 5b — Review
 
-Dispatch a `core:pr-reviewer` agent on the diff (`git diff HEAD`, or the merge-base diff when the work spans commits) with the branch context and the list of changed files. Do not review your own diff in main context.
+Invoke `/core:review` on the diff. It resolves the merge base, batches the changed files, dispatches a `core:pr-reviewer` per batch in parallel and merges the findings — which is what a multi-file diff needs.
+
+Only when the diff is **under 100 lines** (`git diff HEAD --shortstat`), skip the batching and dispatch a single `core:pr-reviewer` agent directly on the diff (`git diff HEAD`, or the merge-base diff when the work spans commits) with the branch context and the list of changed files.
+
+Either way: do not review your own diff in main context.
 
 Handle its findings:
 - 🔴 — fix, then re-run 5a. Repeat until no 🔴 remains.
@@ -185,7 +190,7 @@ First check whether a browser tool is available in this session (a Playwright MC
 - Refactor with no behavior change
 - Test files, build config, or tooling-only
 
-**Borderline?** Print: `Manual verification — run? (UI surfaces: <list>)`. Wait one beat for "go" / "skip". Default to run when in doubt — UI regressions are the whole reason this phase exists. With `--max`, do not ask: run.
+**Borderline?** Print: `Manual verification — run? (UI surfaces: <list>)`. Ask **once**. If the user does not answer within this turn, run it — UI regressions are the whole reason this phase exists. Never ask twice, and never stall the phase waiting for an answer. With `--max`, do not ask at all: run.
 
 If skipping: print `Manual verification skipped — <reason>`. Continue to Phase 6 immediately.
 

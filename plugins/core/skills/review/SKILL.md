@@ -7,7 +7,42 @@ allowed-tools: Read, Glob, Grep, Agent, Bash
 
 # Pre-PR Code Review
 
-> **ISOLATION & PARALLELIZATION REQUIREMENT — READ THIS FIRST:**
+This file has two parts, and they have different audiences:
+
+1. **Orchestrator** (below) — what *this skill* does in the current conversation:
+   resolve the diff, batch the changed files, dispatch `core:pr-reviewer` agents with
+   the right checks files, merge their findings. This is the part you execute.
+2. **Reviewer brief** (further down) — the reviewing instructions. You do **not**
+   perform them here. You paste that section verbatim into each batch agent's prompt,
+   so each agent reviews its own files against the same standard.
+
+---
+
+## Orchestrator
+
+### O1 — Resolve `$MERGE_BASE` (do this first)
+
+Every command below depends on `$MERGE_BASE`. Resolve it before anything else:
+
+```bash
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+BASE=$(git rev-parse --abbrev-ref "$BRANCH@{upstream}" 2>/dev/null | sed 's|^origin/||')
+if [ -z "$BASE" ]; then
+  for candidate in develop main master; do
+    if git rev-parse --verify "origin/$candidate" &>/dev/null; then
+      BASE="$candidate"; break
+    fi
+  done
+fi
+MERGE_BASE=$(git merge-base "origin/$BASE" HEAD)
+```
+
+Pass the resolved `$MERGE_BASE` value (and the base branch name) into every batch
+agent prompt — subagents do not inherit your shell variables.
+
+### O2 — Dispatch
+
+> **ISOLATION & PARALLELIZATION REQUIREMENT:**
 > This review MUST run in clean-slate subagents. Session history, prior fixes, and previous review runs must never influence the output. Each invocation must see only the current git diff.
 >
 > **Parallel dispatch strategy (based on diff size):**
@@ -24,18 +59,19 @@ allowed-tools: Read, Glob, Grep, Agent, Bash
 >    - **Branch context**: branch name and commit messages (`git log $MERGE_BASE...HEAD --oneline`) so the agent understands intent behind the changes
 >    - A preamble: `You are reviewing ONLY the following files from the diff. Read their full contents and the diff hunks for each. Ignore all other changed files.\n\nFiles assigned to you:\n- file1.tsx\n- file2.ts\n- ...`
 >    - Instruct each agent to also run the linter on its own file batch.
->    Note: core:pr-reviewer has its own review dimensions, two-gate filter, and multi-pass logic built in. Do NOT re-embed the full review instructions — just provide files, diff context, reference files, and branch context.
+>    - The **Reviewer brief** section of this file, pasted verbatim, plus the resolved `$MERGE_BASE` value.
+>    Note: paste the Reviewer brief as-is. Do NOT paraphrase it, summarise it, or restate `core:pr-reviewer`'s own built-in review dimensions, two-gate filter and multi-pass logic on top of it — the agent already has those; duplicating them in your own words is what makes batches disagree.
 > 5. **Wait for all background agents to complete.** You will be automatically notified as each finishes — do NOT poll or sleep. Do NOT proceed until all batch agents have returned their results.
 > 6. After all batch agents complete, spawn **one final general-purpose Agent** (foreground, `run_in_background: false`) named `"review-merge"` as the **merge agent**. Pass it all batch results concatenated and instruct it to:
 >    - Deduplicate findings (same file:line reported by overlapping batches)
 >    - **Verify each finding (chain-of-verification):** For every finding, trace the concrete execution path that triggers it. State the preconditions. If you cannot construct a realistic trigger scenario, discard the finding — it is speculative.
 >    - **Skepticism pass:** For each surviving finding, ask: "If I remove this from the report, would the PR actually be worse off?" Discard any finding where the answer is "no" or "uncertain."
 >    - Renumber findings sequentially
->    - Run the **architectural coherence pass (Step 4)** across ALL findings — this is the only step that requires cross-file holistic view and cannot be parallelized
+>    - Run the **architectural coherence pass (Step 4 of the Reviewer brief)** across ALL findings — this is the only step that requires cross-file holistic view and cannot be parallelized; paste that step's text into the merge agent's prompt too
 >    - Produce the final unified report in the output format specified below
 > 7. Return the merge agent's output verbatim to the user.
 >
-> NEVER use SendMessage to continue a prior review agent — always call Agent fresh. NEVER execute review steps yourself in the current conversation.
+> NEVER use SendMessage to continue a prior review agent — always call Agent fresh. NEVER work through the Reviewer brief yourself in the current conversation: your job is O1 (resolve the diff), O2 (batch and dispatch), and the merge. The reviewing happens in the agents.
 
 ---
 
@@ -53,7 +89,12 @@ Read each relevant reference file and include its full contents in the batch age
 
 ---
 
-## Review instructions
+## Reviewer brief (pasted verbatim into each agent prompt)
+
+Everything from here to the end of the file is the brief. The orchestrator does not
+execute it — it copies this section into each `core:pr-reviewer` batch agent prompt
+(and Step 4 plus the Output Format into the merge agent's prompt). The second person
+below addresses the batch agent, not the orchestrator.
 
 > **Identity:** Pre-merge code review. Invoke before creating a PR. Do NOT invoke for: draft PRs, documentation-only changes, or when the user just wants a quick check on a single file (use normal conversation for that).
 > **Quality Gate:** Every finding must reference a specific file:line. An unfired finding is better than a false positive. If unsure, investigate further before reporting.
@@ -90,19 +131,10 @@ Issues found in only one pass that feel uncertain should be held back — only s
 ## Step 1 — Resolve the diff
 
 1. **Load project rules.** Check for `CLAUDE.md` files (root and any subdirectory relevant to changed files) and read them fully. Any project-specific conventions, forbidden patterns, or required patterns defined there take precedence over the generic checks below.
-2. Detect the upstream branch:
-   ```bash
-   BRANCH=$(git rev-parse --abbrev-ref HEAD)
-   BASE=$(git rev-parse --abbrev-ref "$BRANCH@{upstream}" 2>/dev/null | sed 's|^origin/||')
-   if [ -z "$BASE" ]; then
-     for candidate in develop main master; do
-       if git rev-parse --verify "origin/$candidate" &>/dev/null; then
-         BASE="$candidate"; break
-       fi
-     done
-   fi
-   MERGE_BASE=$(git merge-base "origin/$BASE" HEAD)
-   ```
+2. `$MERGE_BASE` is resolved by the orchestrator in step O1 and given to you in this
+   prompt. Use the value you were passed. If it is missing, re-derive it: upstream of
+   the current branch, else the first of `origin/develop`, `origin/main`,
+   `origin/master` that exists, then `git merge-base "origin/$BASE" HEAD`.
 3. Run `git diff $MERGE_BASE...HEAD` — full diff
 4. Run `git diff $MERGE_BASE...HEAD --name-only` — file list
 5. Run `git diff $MERGE_BASE...HEAD --stat` — summary

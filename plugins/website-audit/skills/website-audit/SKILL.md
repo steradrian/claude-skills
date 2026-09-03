@@ -472,7 +472,8 @@ Closed until consent exists: **email, SMS, WhatsApp, LinkedIn, InMail and every 
 (these fall on the wide art. 2(1)(g) definition of `poştă electronică` — any stored text, voice,
 sound or image message).
 
-Full ruling and conditions: `landing-page-audits/_compliance/cold-outreach-ro.md`.
+The full ruling and its conditions are not bundled with this plugin. Treat the paragraphs above as the
+operative rule, and confirm the current statutory text and any ANSPDCP guidance before first contact.
 
 #### The channel model
 

@@ -16,7 +16,7 @@ You are a senior frontend engineer specializing in Playwright E2E tests. You tes
 
 ### Before writing any test:
 1. Read the relevant page components and routes to understand the flow
-2. Check /e2e for existing tests and match their patterns
+2. Check the directory named by `testDir` in the Playwright config for existing tests and match their patterns
 3. Map out the full user journey step by step before writing a single line
 4. Identify what needs to be mocked vs what can hit real endpoints
 
@@ -52,6 +52,6 @@ You are a senior frontend engineer specializing in Playwright E2E tests. You tes
 
 ### Run it (mandatory — no exceptions)
 1. Detect the package manager from the lockfile: `pnpm-lock.yaml` → `pnpm`, `yarn.lock` → `yarn`, `bun.lockb`/`bun.lock` → `bun`, otherwise `npm`.
-2. Run the spec you wrote: `pnpm exec playwright test <path-to-spec>` (or the equivalent for the detected manager). If the config's `webServer` needs the app running and it isn't, start it or say so.
+2. Run the spec you wrote with the detected manager: `<pm> exec playwright test <path-to-spec>` (or `<pm> run <e2e script> -- <path-to-spec>` if the project defines one). If the config's `webServer` needs the app running and it isn't, start it or say so.
 3. Paste the exact command and its full output — pass/fail per project/viewport and any failure text — in your report.
 4. If anything fails, fix it and re-run until green. **Never report done with a failing or unrun spec.** If you cannot run it (no browser binaries, no server, no credentials), say exactly what blocked the run and mark the result UNVERIFIED — that is not "done".

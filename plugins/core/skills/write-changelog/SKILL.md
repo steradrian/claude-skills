@@ -11,13 +11,25 @@ Follows [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## Step 1: Read Context
 
-Run these in **parallel tool calls**:
+"The current changes" means everything since this branch left the base, and
+`git diff HEAD` is **empty once the work is committed** — it only shows uncommitted
+changes. Read both ranges:
 
 ```bash
+BASE=$(git merge-base origin/main HEAD)   # substitute the real base branch when it isn't main
+
+# Committed work on this branch
+git diff $BASE...HEAD --stat
+git diff $BASE...HEAD
+git log $BASE..HEAD --oneline
+
+# Still uncommitted
 git diff HEAD --stat
 git diff HEAD
-git log -5 --oneline
 ```
+
+Run them in **parallel tool calls**. If `origin/main` doesn't exist, use the branch's
+upstream, else the first of `origin/develop` / `origin/master` that does.
 
 ## Step 2: Delegate to Agent
 

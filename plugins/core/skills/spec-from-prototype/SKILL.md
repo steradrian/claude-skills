@@ -60,8 +60,9 @@ tickets are explicitly flagged.
    overrides.
 5. **All artifacts written to disk.** Conversation output is a summary
    pointer. The spec lives in `docs/specs/<feature-slug>/`.
-6. **Don't commit.** Per global CLAUDE.md, only the user runs commits.
-   End with "ready for review" and the path to the spec directory.
+6. **Don't commit.** Only the user runs commits — and the user's CLAUDE.md
+   files may say so explicitly. End with "ready for review" and the path to
+   the spec directory.
 
 ## Required prerequisites
 

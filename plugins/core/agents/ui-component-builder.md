@@ -129,7 +129,24 @@ Follow **Icons** in `design-rules.md`: bare Lucide icons, no `bg-primary/10` con
 
 ---
 
-## Charts (when building chart components)
+## Consumer, mobile-first surfaces (the default)
+
+This is what you build unless told otherwise. Full patterns in **Consumer, mobile-first surfaces** in `design-rules.md`.
+
+- Collections are **cards in a horizontally-scrolling rail** — the rail scrolls inside its own container, the page never scrolls sideways, sibling rails share one card shape.
+- Secondary content opens in a **sheet or drawer** with a visible drag handle, dismissed by handle and backdrop — not a second navigation stack.
+- The committed action is a **sticky bottom CTA** respecting `env(safe-area-inset-bottom)`; destructive actions never sit under the resting thumb.
+- **Touch targets ≥ 44×44px** with ≥ 8px between adjacent targets.
+- **One primary action per screen**, filled; everything else `outline` / `ghost`.
+- **Image-first**: fixed aspect ratio per card family, and every image slot gets the designed fallback (gradient + drop-shadowed icon), never a bare icon on a flat background.
+
+---
+
+## Data-dense surfaces (admin, dashboards)
+
+Charts and tables below are for internal, data-dense screens. On a consumer mobile surface prefer a card list to a table, and a value in a card to a chart. Where a token name appears, use **the project's token for that role** — the names in parentheses are the example convention, so grep the stylesheets before adopting one.
+
+### Charts (when building chart components)
 
 Extract all magic numbers to named constants — no magic numbers in JSX:
 ```tsx
@@ -153,11 +170,9 @@ Accessibility wrapper:
 </figure>
 ```
 
----
+### Tables (when building table components)
 
-## Tables (when building table components)
-
-Container, row density, hover and selected-row classes, and the badge variants are in **Tables and badges** in `design-rules.md`. Do not edit the generated table primitive — override at the usage layer. On mobile prefer a card list; a table that must scroll horizontally scrolls inside its own container. Use the DS `Badge` for type badges if it exists.
+Container, row density, hover and selected-row classes, and the badge variants (including the "Draft" status badge for unpublished records — an admin concept) are in **Data-dense surfaces** in `design-rules.md`. Do not edit the generated table primitive — override at the usage layer. On mobile prefer a card list; a table that must scroll horizontally scrolls inside its own container. Use the DS `Badge` for type badges if it exists.
 
 ---
 
@@ -174,3 +189,18 @@ Container, row density, hover and selected-row classes, and the badge variants a
 - Hardcoded color in className → convert to semantic token
 - Touch target under 44px → enlarge the hit area
 - `rounded-lg` on a card → upgrade to `rounded-xl`
+
+---
+
+## Final step — run the gate (MANDATORY, never skip)
+
+You wrote code, so you verify it compiles and lints before you report anything.
+
+1. **Detect the package manager from the lockfile** — `pnpm-lock.yaml` → `pnpm`, `package-lock.json` → `npm`, `yarn.lock` → `yarn`, `bun.lockb` → `bun`. Never hardcode one. Call it `<pm>` below.
+2. Run **`<pm> typecheck`** (or the equivalent script in `package.json` — `type-check`, `tsc --noEmit`; read `scripts` and use what exists).
+3. Run **`<pm> lint`** (same rule: use the script the project actually defines).
+4. **Paste the real output of each command** into your report — not a summary, not "passed".
+
+Rules:
+- **Never report done on a failure.** A type error or lint error in code you wrote is your bug: fix it and re-run both commands from the top.
+- If a command cannot run (no such script, missing dependencies, sandbox restriction), say exactly which one and why, and mark the work **UNVERIFIED**. Do not describe an unrun command as passing.

@@ -67,7 +67,7 @@ No arbitrary font sizes. The project must have a defined type scale and every te
 
 - 🔴 Arbitrary font size (`text-[Xpx]`) — replace with defined scale
 - 🔴 Font size below 12px — minimum is 12px; any exception must be documented inline
-- 🟡 Top-level route page (Dashboard, Menus, etc.) renders a page-level H1 — remove it; sidebar + breadcrumbs already communicate location
+- 🟡 Top-level route page (any item that appears in the primary nav) renders a page-level H1 — remove it; sidebar + breadcrumbs already communicate location
 - 🟡 Stat number missing `tabular-nums` — digits must align vertically for counter animations and readability
 - 🟢 Nav group labels use `uppercase` + `tracking-wider` — replace with lowercase, semibold, no extra tracking
 
@@ -136,7 +136,7 @@ Charts are a frequent source of design violations.
 
 - 🔴 Chart floating on page background without a card wrapper — every chart lives inside a card with a header row (title + controls)
 - 🔴 Recharts tooltip missing `contentStyle` — must always be styled with CSS vars (`--color-popover`, `--color-border`, `--color-foreground`) and `--shadow-overlay`
-- 🔴 Default charting library colors in use — replace with warm brand-derived chart tokens (`chart-1` through `chart-5`)
+- 🔴 Default charting library colors in use — replace with the project's brand-derived chart tokens (`chart-1` through `chart-5`)
 - 🟡 Line stroke width is 1px — upgrade to 2–2.5px (1px looks fragile)
 - 🟡 Bar corners are square — add top border-radius (`[4, 4, 0, 0]`) for modern feel
 - 🟡 Grid lines have full opacity — reduce to `strokeOpacity={0.3}` + `strokeDasharray="3 3"`
@@ -157,11 +157,11 @@ Charts are a frequent source of design violations.
 
 ### 13. MICRO-DETAILS
 
-- 🟡 No `::selection` color override — default browser blue clashes with warm palettes; set to brand accent at ~20% opacity
-- 🟡 Scrollbars unstyled — style them thin (6–8px) with a warm-tinted thumb to match the palette
+- 🟡 No `::selection` color override — default browser blue clashes with most brand palettes; set to the brand accent at ~20% opacity
+- 🟡 Scrollbars unstyled — style them thin (6–8px) with a thumb tinted to match the palette
 - 🟡 Disabled elements missing `cursor-not-allowed` — pair with reduced opacity
 - 🟡 Number formatting uses hardcoded separators — use `Intl.NumberFormat` with the active locale
-- 🟡 Empty state shows a blank frame (empty chart, bare table headers) — show a warm illustration + message + CTA instead
+- 🟡 Empty state shows a blank frame (empty chart, bare table headers) — show an illustration + message + CTA instead
 - 🟢 Loading skeleton shape doesn't match the content it replaces — card skeleton for cards, line skeleton for text rows, circle for avatars
 
 ---

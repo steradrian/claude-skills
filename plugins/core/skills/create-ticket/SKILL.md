@@ -12,17 +12,30 @@ This is primarily an **end-of-work documentation artifact** — written after th
 
 ## Step 1: Read Context
 
-Run these in **parallel tool calls**:
+A ticket documents the whole task, and `git diff HEAD` is **empty once the work is
+committed** — it only shows uncommitted changes. Read both ranges so committed work
+isn't mistaken for "no diff":
 
 ```bash
+BASE=$(git merge-base origin/main HEAD)   # substitute the real base branch when it isn't main
+
+# Committed work on this branch
+git diff $BASE...HEAD --stat
+git diff $BASE...HEAD
+git log $BASE..HEAD --oneline
 git log -10 --oneline
+
+# Still uncommitted
 git diff HEAD --stat
 git diff HEAD
 ```
 
+Run them in **parallel tool calls**. If `origin/main` doesn't exist, use the branch's
+upstream, else the first of `origin/develop` / `origin/master` that does.
+
 Determine mode:
-- **Has a diff** → End-of-work mode (document what was actually built)
-- **No diff** → Planning mode (describe what will be built)
+- **Either range has changes** → End-of-work mode (document what was actually built, across both)
+- **Both ranges empty** → Planning mode (describe what will be built)
 
 ---
 

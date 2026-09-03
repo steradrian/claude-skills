@@ -71,7 +71,7 @@ If changes are requested, update and re-present.
 
 ## Phase 3: Build
 
-After approval, implement using the ui-component-builder protocol:
+After approval, dispatch the `core:ui-component-builder` agent to implement the approved spec (or implement it here when the surface is a single small component). Either way the rules are:
 
 1. Create each component following the approved spec
 2. Use semantic tokens only — no hardcoded colors
@@ -88,35 +88,54 @@ After approval, implement using the ui-component-builder protocol:
 
 **Spawn agents in parallel in a single message:**
 
-**Agent 1 — Accessibility Audit (always runs):**
+**`core:accessibility-auditor` — Accessibility Audit (always runs):**
 - Task: Audit the built components for WCAG 2.1 AA compliance
 - Files to audit: [list the component file paths]
 - Checklist: color contrast 4.5:1 (light + dark), touch targets 44x44px, `aria-label` on icon-only buttons, visible focus rings, keyboard navigability, `prefers-reduced-motion`, semantic HTML
 - Fix any issues found directly in the component files
 
-**Agent 2 — Motion Design (conditional — only if design spec identified animations):**
+**`core:ui-designer` — Motion Design (conditional — only if the design spec identified animations):**
 - Task: Implement animations identified in the design spec
 - For each animation: define intent (entrance, feedback, state change), specify duration/easing/properties (transform + opacity only for GPU compositing)
 - Use Framer Motion or Tailwind transitions as appropriate
 - Add `prefers-reduced-motion` fallback for every animation
 
-If no animations were identified in the spec, skip Agent 2 and only spawn Agent 1.
+If no animations were identified in the spec, skip `core:ui-designer` here and spawn only `core:accessibility-auditor`.
 
 Wait for agent(s) to complete, then proceed to Phase 5.
 
 ---
 
-## Phase 5: Self-Review
+## Phase 5: Quality Gate
 
-**Mandatory. Non-interactive.**
+**Mandatory and non-interactive. Execute it now without pausing.** Re-reading your own
+code is not a gate — the gate is tool output plus independent reviewers.
 
-Re-read all generated code as a PR review:
+### 5a — Static gate
 
-- 🔴 Bugs, hardcoded values, missing states, accessibility gaps
-- 🟡 Convention violations, missing dark mode, spacing inconsistencies
-- 🟢 Non-blocking suggestions
+Detect the package manager per `${CLAUDE_PLUGIN_ROOT}/references/package-manager.md`
+(`<pm>` below). Run these in order and **paste each command's output into the
+conversation** — last ~20 lines when green, the full failure when red:
 
-Fix all 🔴 issues. Flag 🟡 for developer decision.
+1. **Typecheck** — first existing script among `typecheck`, `type-check`, `tsc`; else `<pm> exec tsc --noEmit`
+2. **Lint** — first existing script among `lint`, `lint:check`, `biome:check`, `eslint`; skip if none
+3. **Tests** — `<pm> exec vitest run` (or the `test` script when it wraps vitest)
+
+Any failure: fix it, then re-run the whole gate from step 1. Do not proceed while any
+step is red. Pre-existing failures in files you did not touch are reported, not fixed.
+
+### 5b — Independent review
+
+Dispatch both agents in parallel on the diff (`git diff HEAD`, or the merge-base diff
+when the work spans commits), passing the changed file list and the approved spec:
+
+- **`core:pr-reviewer`** — correctness, conventions, missing states, dead code
+- **`core:ui-designer`** — token usage, hierarchy, spacing, dark mode, motion against the spec
+
+Do not review your own diff in main context.
+
+Handle findings: 🔴 — fix, then re-run 5a until none remain. 🟡 — fix when the change is
+local to this diff, otherwise flag for developer decision. 🔵 — carry into the summary.
 
 ---
 
@@ -125,7 +144,8 @@ Fix all 🔴 issues. Flag 🟡 for developer decision.
 Report:
 - Components created (with file paths)
 - Token mapping used
-- Accessibility audit results
+- Static gate result — one line per command
+- `core:accessibility-auditor`, `core:pr-reviewer` and `core:ui-designer` outcomes
 - Animations added (if any)
 - Any deviations from the approved spec (and why)
-- Follow-up items from self-review
+- Follow-up items from review (🟡 flagged, 🔵 carried)

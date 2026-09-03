@@ -32,7 +32,7 @@ These rules exist because skipping any one of them produces silent data loss or 
 
 ## Required prerequisites
 
-Before doing anything, load the per-thread fix protocol: `fix-pr-thread`. It bulletproofs against same-file races, orchestrator rollback and scope-widening. Try the `Skill` tool first; if it is not in the available-skills list, Read `${CLAUDE_PLUGIN_ROOT}/skills/fix-pr-thread/SKILL.md` directly — that is equivalent. Only declare it missing if it is absent from both.
+Before doing anything, load the per-thread fix protocol. It bulletproofs against same-file races, orchestrator rollback and scope-widening. Call the `Skill` tool with the name `core:fix-pr-thread` (the plugin prefix is required — a bare `fix-pr-thread` will not resolve); if that name is not in the available-skills list, Read `${CLAUDE_PLUGIN_ROOT}/skills/fix-pr-thread/SKILL.md` directly — that is equivalent. Only declare it missing if it is absent from both.
 
 Two rules this flow depends on, stated here so no external skill is needed:
 
@@ -234,10 +234,11 @@ Group threads by `path`. Within a path, sort threads by `line` ascending.
 ONE worker, never split across parallel agents.** Two agents must never
 edit the same file.
 
-### 3b — Run `fix-pr-thread`
+### 3b — Run `core:fix-pr-thread`
 
-Invoke the `fix-pr-thread` skill with input `{ path, threads }` per group.
-Read `${CLAUDE_PLUGIN_ROOT}/skills/fix-pr-thread/SKILL.md` for the protocol.
+Invoke the `core:fix-pr-thread` skill (Skill tool, that exact name — not a bare
+`fix-pr-thread`) with input `{ path, threads }` per group. Read
+`${CLAUDE_PLUGIN_ROOT}/skills/fix-pr-thread/SKILL.md` for the protocol.
 
 **Execution mode:** fewer than 3 path groups → process them inline,
 sequentially, in this context. 3 or more → one foreground agent per path
@@ -267,14 +268,8 @@ hardcoded.
 
 #### Detection (run once on the first round, cache result for later rounds in the same loop)
 
-**Step 1 — Package manager** (from lockfile in worktree root):
-
-| Lockfile | Package manager |
-|---|---|
-| `pnpm-lock.yaml` | `pnpm` |
-| `yarn.lock` | `yarn` |
-| `bun.lockb` | `bun` |
-| `package-lock.json` | `npm` |
+**Step 1 — Package manager**: detect `$PM` from the lockfile in the worktree root per
+`${CLAUDE_PLUGIN_ROOT}/references/package-manager.md`.
 
 If no lockfile or no `package.json`: this isn't a Node project. Run no
 checks and proceed (caller may extend for non-Node stacks; out of scope
@@ -325,12 +320,24 @@ Pick the highest tier that any file in `results.filesChanged` triggers. Run that
 
 **Tier 2 dev-server smoke test:**
 
+Follow `${CLAUDE_PLUGIN_ROOT}/references/browser-playbook.md` for the mechanics
+(tool preflight, dev server and port, ref-based interaction, console/network
+assertions, evidence). The tier-specific part:
+
 1. Start the dev server in the background. Capture the port.
 2. Wait for it to become ready (poll `http://localhost:<port>/` until 200, max 60s).
-3. Open the affected page(s) via `mcp__claude-in-chrome__navigate`. For each page:
-   - `mcp__claude-in-chrome__read_console_messages` — filter to `error` / `warning`. Flag any new entries that didn't exist on `main`.
-   - If the change touches a specific user flow (auth, checkout, form submit), exercise that flow via `mcp__claude-in-chrome__find` + `mcp__claude-in-chrome__form_input`. Verify the network response (`mcp__claude-in-chrome__read_network_requests`) returns 2xx.
+3. Open each affected page and assert per the playbook: no new console errors that
+   didn't exist on the base branch, no unexpected 4xx/5xx. If the change touches a
+   specific user flow (auth, checkout, form submit), exercise that flow and verify its
+   network response is 2xx.
 4. Kill the dev server before the commit step. Do NOT leave it running across rounds — the next round's verification would race with it.
+
+**No-browser branch:** if no Playwright tools are available in this session (cloud
+session, restricted sandbox), do not fall back to another browser tool and do not
+fake the step. Run the tier-1 static gate only (typecheck, lint, tests, and the build
+script), and state plainly in the Step 7 summary: `Tier 2 smoke test skipped — no
+browser tool available; static gate only`. Never claim a page was opened or a
+screenshot taken.
 
 Which pages count as "affected"? Derive from the file path. First find the app directory: `app/` if it exists at the repo root, else `src/app/` (`APP_DIR`). Then:
 - **Route files** (`<APP_DIR>/**/page.*`, `layout.*`, `loading.*`, `error.*`, `route.*`) → smoke the route the path maps to, dropping route groups `(group)` and filling dynamic segments `[slug]` with a real value from the app (e.g. `<APP_DIR>/(marketing)/foo/page.tsx` → `/foo`)

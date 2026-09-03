@@ -6,8 +6,8 @@ description: >
   change-set, builds a tiered test matrix (golden / coverage / edge), then
   drives Playwright MCP through it — clicking, typing, watching console +
   network, screenshotting every assertion. `--matrix <path>` runs a
-  pre-written, version-controlled matrix instead of generating one (the old
-  smoke-test mode). Designed for changes whose failure modes are invisible to
+  pre-written, version-controlled matrix instead of generating one — the
+  repeatable smoke pass. Designed for changes whose failure modes are invisible to
   `tsc`, unit tests and `next build`: multi-step user flows, third-party
   integrations, async behavior. Triggered by "manually test this PR
   end-to-end", "be my QA agent", "test every flow in the browser", "smoke
@@ -19,15 +19,16 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Agent, mcp__playwright__*, m
 
 # Manual test
 
+**Target: $ARGUMENTS** (empty → the current branch).
+
 End-to-end manual QA for the current branch or PR. The orchestrator indexes
 the change-set, builds a tiered matrix, then drives Playwright MCP through
 it in-context — capturing screenshots, console output and network failures
 as evidence.
 
-**No-browser mode:** if Playwright / Chrome tools are not available (cloud
-session), stop before Step 3. Run the static checks that apply (`tsc`,
-lint, unit tests, diff read), report exactly which ran, and say the browser
-pass did not happen. Never claim a screenshot was taken.
+**No browser tools available (cloud session)?** Follow the no-browser rule in
+`${CLAUDE_PLUGIN_ROOT}/references/browser-playbook.md`: static checks only, say so,
+never claim a screenshot. Here the drive loop is Step 3 — Steps 1-2 still run.
 
 **Preflight: follow `${CLAUDE_PLUGIN_ROOT}/references/browser-playbook.md`.**
 

@@ -8,9 +8,9 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 
 # Fix After Review
 
-Local counterpart of `fix-pr-thread`: the same read → decide → minimal-edit protocol, but the input is a review report already in this conversation instead of GitHub threads. Everything runs sequentially in the main context. No subagents, no orchestrator pass, no external doc lookups, no fix-all-occurrences.
+Local counterpart of `core:fix-pr-thread`: the same read → decide → minimal-edit protocol, but the input is a review report already in this conversation instead of GitHub threads. Everything runs sequentially in the main context. No subagents, no orchestrator pass, no external doc lookups, no fix-all-occurrences.
 
-**Package manager rule:** detect from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb`/`bun.lock` → bun, `package-lock.json` → npm) and use it for every command below.
+**Package manager:** detect it per `${CLAUDE_PLUGIN_ROOT}/references/package-manager.md` and use it for every command below; `<pm>` stands for the detected one.
 
 ## 1. Parse the request
 

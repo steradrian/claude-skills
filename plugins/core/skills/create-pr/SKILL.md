@@ -7,13 +7,27 @@ Generate a comprehensive PR description. If the user's context is too vague, ask
 
 ## Step 1: Gather Context
 
-Run these in **parallel tool calls** to understand what changed:
+A PR spans everything since the branch left the base, and `git diff HEAD` alone is
+**empty once the work is committed** — it only shows uncommitted changes. So read both
+ranges:
 
 ```bash
+BASE=$(git merge-base origin/main HEAD)   # substitute the real base branch when it isn't main
+
+# Committed work on this branch — the substance of the PR
+git diff $BASE...HEAD --stat
+git diff $BASE...HEAD
+git log $BASE..HEAD --oneline
+
+# Anything still uncommitted in the working tree
 git diff HEAD --stat
-git log -5 --oneline
 git diff HEAD
 ```
+
+Run them in **parallel tool calls**. The branch's committed range is the PR; mention
+uncommitted changes only to flag that they are not in it yet. If `origin/main` doesn't
+exist, use the branch's upstream, else the first of `origin/develop` / `origin/master`
+that does.
 
 ## Step 2: Fill Gaps
 

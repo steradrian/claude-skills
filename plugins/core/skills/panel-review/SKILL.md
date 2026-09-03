@@ -10,7 +10,7 @@ description: >
   or natural language: "panel review this PR", "bugbot this", "every
   agent reviews these changes", "adversarial PR review".
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep, Bash, Agent, AskUserQuestion
+allowed-tools: Read, Write, Glob, Grep, Bash, Agent, AskUserQuestion
 ---
 
 # Panel Review

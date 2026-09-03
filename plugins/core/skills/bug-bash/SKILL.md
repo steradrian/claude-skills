@@ -15,6 +15,8 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Agent, mcp__playwright__*, m
 
 # Bug bash
 
+**Bug list: $ARGUMENTS** (a path to a markdown list, or the list inline).
+
 Per-bug loop: reproduce in the browser, root-cause, propose fix, apply,
 review, re-verify, document. Repeat for the whole list. The orchestrator
 is the coordinator AND the browser driver. Subagent dispatch is reserved
@@ -26,11 +28,13 @@ before-evidence, root cause, the diff, and after-evidence. Future-you can
 read one file and know exactly what was wrong, what changed, and that
 it's fixed.
 
-**No-browser mode:** if Playwright / Chrome tools are not available (cloud
-session), stop before Step 1a. Root-cause + fix + `core:fix-reviewer` can
-still run from the bug descriptions, but every bug then ends the run as
-`UNVERIFIED`, never `FIXED`. Report exactly which static checks ran.
-Never claim a repro or re-verify screenshot was taken.
+**No browser tools available (cloud session)?** Follow the no-browser rule in
+`${CLAUDE_PLUGIN_ROOT}/references/browser-playbook.md`: static checks only, say so,
+never claim a screenshot. Here the drive loop is the browser half of the per-bug loop
+— **Step 1a (reproduce) and Step 1f (re-verify) are skipped**; Step 1b (root cause),
+1c (propose), 1d (apply), 1d.5 (`core:fix-reviewer`) and 1e (rebuild upstream) still
+run from the bug descriptions, as do Steps 2-4. Every bug then ends the run as
+`UNVERIFIED`, never `FIXED`, and never as `CNR` — nothing was attempted in a browser.
 
 **Preflight: follow `${CLAUDE_PLUGIN_ROOT}/references/browser-playbook.md`.**
 
@@ -153,8 +157,20 @@ Per invariant 5, apply immediately; the proposal is for the audit trail.
 
 ### 1d. Apply fix
 
-Edit the file(s). Let the TS hook run. If it reports errors, fix them
-before proceeding — don't accumulate broken state.
+Edit the file(s), then run the static gate and **paste its output** — a hook firing in
+the background is not evidence. Detect `<pm>` per
+`${CLAUDE_PLUGIN_ROOT}/references/package-manager.md`, then run, in order:
+
+```bash
+<pm> run typecheck && <pm> run lint && <pm> exec vitest run
+```
+
+Use the project's actual script names (first existing among `typecheck` / `type-check`
+/ `tsc`, and `lint` / `lint:check` / `biome:check`; fall back to `<pm> exec tsc
+--noEmit` when no typecheck script exists, and skip a check the project doesn't have).
+Any failure: fix it and re-run the whole gate before proceeding — don't accumulate
+broken state. Pre-existing failures in files this bug didn't touch are reported, not
+fixed.
 
 ### 1d.5 Review the fix (`core:fix-reviewer`) — the gate
 
@@ -189,12 +205,16 @@ skips its scenario step on trivial diffs and returns 🟢 fast.
 ### 1e. Rebuild upstream (if applicable)
 
 ```
-pnpm --filter <pkg> build       # or per project conventions
+<pm> --filter <pkg> build       # or per project conventions
 ```
 
-Wait for build success. Then re-link (`pnpm link`) or `pnpm install` in
-the consuming repo (`file:` dep). Restart the dev server (kill the pid you
-started, restart) — Next.js often caches the old package code.
+`<pm>` is the detected package manager
+(`${CLAUDE_PLUGIN_ROOT}/references/package-manager.md`) — filter syntax varies, so use
+the project's own build command when it has one.
+
+Wait for build success. Then re-link (`<pm> link`, when the manager supports it) or
+`<pm> install` in the consuming repo (`file:` dep). Restart the dev server (kill the
+pid you started, restart) — Next.js often caches the old package code.
 
 ### 1f. Re-verify
 
