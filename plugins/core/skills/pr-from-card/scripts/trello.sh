@@ -11,12 +11,16 @@
 #
 # Usage:
 #   trello.sh check                          prints "ok" or the missing variables, exit 1
+#   trello.sh lists                          list names on the board, one per line
+#   trello.sh cards [list]                   open cards on the board (or in one list), one JSON per line
 #   trello.sh get <card>                     card JSON: id, shortLink, shortUrl, name, desc, list
 #   trello.sh create <title> <desc>          creates a card in the Ready list, prints card JSON
 #   trello.sh move <card> ready|progress|review|done
 #   trello.sh comment <card> <text>
 #   trello.sh attach <card> <url>
+#   trello.sh archive <card>                 archives (closes) a card; nothing is ever deleted
 # <card> is a card id, a short link, or a full trello.com/c/... URL.
+# <list> is one of ready|progress|review|done or an exact list name.
 
 set -euo pipefail
 
@@ -53,6 +57,10 @@ call() {
   printf '%s' "$out"
 }
 
+board_lists() {
+  call GET "/boards/$TRELLO_BOARD/lists" --get --data-urlencode "fields=name"
+}
+
 list_id() {
   local kind="$1" name
   case "$kind" in
@@ -60,10 +68,9 @@ list_id() {
     progress) name="${TRELLO_LIST_PROGRESS:-In progress}" ;;
     review)   name="${TRELLO_LIST_REVIEW:-In review}" ;;
     done)     name="${TRELLO_LIST_DONE:-Done}" ;;
-    *) die "unknown list kind '$kind' (ready|progress|review|done)" ;;
+    *)        name="$kind" ;;
   esac
-  call GET "/boards/$TRELLO_BOARD/lists" --get --data-urlencode "fields=name" \
-    | python3 -c '
+  board_lists | python3 -c '
 import json, sys
 name = sys.argv[1].casefold()
 for l in json.load(sys.stdin):
@@ -89,10 +96,24 @@ cmd="${1:-}"; shift || true
 case "$cmd" in
   check)
     need_env && echo ok ;;
+  lists)
+    need_env >/dev/null || die "$(need_env)"
+    board_lists | python3 -c 'import json,sys; print("\n".join(l["name"] for l in json.load(sys.stdin)))' ;;
+  cards)
+    need_env >/dev/null || die "$(need_env)"
+    lists=$(board_lists)
+    if [ -n "${1:-}" ]; then path="/lists/$(list_id "$1")/cards"; else path="/boards/$TRELLO_BOARD/cards"; fi
+    call GET "$path" --get --data-urlencode "fields=name,shortLink,shortUrl,idList,labels" \
+      | python3 -c '
+import json, sys
+lists = {l["id"]: l["name"] for l in json.loads(sys.argv[1])}
+for c in json.load(sys.stdin):
+    print(json.dumps({"shortLink": c["shortLink"], "shortUrl": c["shortUrl"], "name": c["name"],
+                      "list": lists.get(c["idList"], c["idList"]), "labels": [l["name"] for l in c.get("labels", [])]}))' "$lists" ;;
   get)
     need_env >/dev/null || die "$(need_env)"
     ref=$(card_ref "${1:?card}")
-    lists=$(call GET "/boards/$TRELLO_BOARD/lists" --get --data-urlencode "fields=name")
+    lists=$(board_lists)
     call GET "/cards/$ref" --get --data-urlencode "fields=name,desc,shortLink,shortUrl,idList,labels" \
       | print_card "$lists" ;;
   create)
@@ -113,6 +134,10 @@ case "$cmd" in
     need_env >/dev/null || die "$(need_env)"
     ref=$(card_ref "${1:?card}")
     call POST "/cards/$ref/attachments" --data-urlencode "url=${2:?url}" >/dev/null && echo attached ;;
+  archive)
+    need_env >/dev/null || die "$(need_env)"
+    ref=$(card_ref "${1:?card}")
+    call PUT "/cards/$ref" --data-urlencode "closed=true" >/dev/null && echo archived ;;
   *)
-    sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+    sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac
