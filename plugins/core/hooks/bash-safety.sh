@@ -18,30 +18,40 @@ CMD=$(hook_field '.tool_input.command')
 
 AT='(^|[;&|][[:space:]]*|\$\([[:space:]]*|sudo[[:space:]]+|command[[:space:]]+)'
 
-# name|regex (regex is matched after the AT anchor)
+# The bar for a pattern here is: unrecoverable, or destroys something outside
+# the working tree. Everyday git hygiene is NOT on this list — `rm -rf
+# node_modules`, `git checkout -- file`, `git stash drop`, `git branch -D`,
+# `git clean -fd` and `git reset --hard` are all normal, all recoverable from
+# the remote or a reinstall, and prompting on them turns auto mode into a
+# clicking exercise. Auto mode's own classifier still sees every one of them.
+#
+# name|regex (matched after the AT anchor)
 PATTERNS=(
-  'rm -r/-f|rm[[:space:]]+(-[a-zA-Z]*[rRf][a-zA-Z]*[[:space:]]+)+'
-  'find -delete|find[[:space:]].*[[:space:]]-delete'
-  'git reset --hard|git[[:space:]]+reset[[:space:]]+--hard'
-  'git clean -f|git[[:space:]]+clean[[:space:]]+-[a-zA-Z]*f'
-  'git checkout -- <path>|git[[:space:]]+checkout[[:space:]]+--[[:space:]]'
-  'git restore --worktree|git[[:space:]]+restore[[:space:]]+(--worktree|-W|--staged[[:space:]]+--worktree|\.)'
-  'git branch -D|git[[:space:]]+branch[[:space:]]+(-D|--delete[[:space:]]+--force|-[a-zA-Z]*D)'
-  'git stash drop/clear|git[[:space:]]+stash[[:space:]]+(drop|clear)'
+  # rm -rf aimed outside the project: /, ~, $HOME, a parent, or a bare glob.
+  'rm -rf outside the project|rm[[:space:]]+(-[a-zA-Z]*[rR][a-zA-Z]*[[:space:]]+)+(-[a-zA-Z]+[[:space:]]+)*(/[[:space:]]*$|/[a-z]|~|\$HOME|\.\./|\*)'
+  'rm -rf $VAR (unresolvable target)|rm[[:space:]]+-[a-zA-Z]*[rR][a-zA-Z]*[[:space:]]+.*\$\{?[A-Za-z_]'
+  # History rewrites and ref deletion: not recoverable from a normal clone.
   'git reflog expire|git[[:space:]]+reflog[[:space:]]+expire'
   'git update-ref -d|git[[:space:]]+update-ref[[:space:]]+-d'
+  'git filter-branch/filter-repo|git[[:space:]]+filter-(branch|repo)'
   'git push --force|git[[:space:]]+push([[:space:]]+[^[:space:]]+)*[[:space:]]+(--force(-with-lease)?|-f)([[:space:]]|$)'
   'git push --force|git[[:space:]]+push[[:space:]]+(--force(-with-lease)?|-f)'
+  # Data stores: destroys state no reinstall brings back.
   'prisma reset|prisma[[:space:]]+(migrate[[:space:]]+reset|db[[:space:]]+push[[:space:]]+--force-reset)'
   'supabase db reset|supabase[[:space:]]+db[[:space:]]+reset'
-  'docker prune|docker[[:space:]]+(system|volume|image|container)[[:space:]]+prune'
+  'docker volume prune|docker[[:space:]]+(system|volume)[[:space:]]+prune'
+  # Infrastructure.
   'kubectl delete|kubectl[[:space:]]+delete'
   'terraform destroy|terraform[[:space:]]+destroy'
   'chmod -R 777|chmod[[:space:]]+-R[[:space:]]+777'
 )
-SQL_PATTERNS=(
-  'DROP TABLE/DATABASE|DROP[[:space:]]+(TABLE|DATABASE|SCHEMA)'
+# Matched anywhere in the command, not at a command boundary: a redirect or a
+# quoted SQL statement never sits at the start of a simple command.
+UNANCHORED_PATTERNS=(
+  'DROP DATABASE/SCHEMA|DROP[[:space:]]+(DATABASE|SCHEMA)'
+  'DROP TABLE|DROP[[:space:]]+TABLE'
   'TRUNCATE|TRUNCATE[[:space:]]+TABLE'
+  'writes to a shell rc or credentials file|>>?[[:space:]]*(~|\$HOME)/\.(zshrc|bashrc|zprofile|profile|npmrc|netrc|ssh/)'
 )
 
 emit_ask() {
@@ -59,9 +69,8 @@ for entry in "${PATTERNS[@]}"; do
   name="${entry%%|*}"; re="${entry#*|}"
   printf '%s' "$CMD" | grep -qE "${AT}${re}" && emit_ask "Destructive command ($name): $CMD"
 done
-for entry in "${SQL_PATTERNS[@]}"; do
+for entry in "${UNANCHORED_PATTERNS[@]}"; do
   name="${entry%%|*}"; re="${entry#*|}"
-  # SQL is case-insensitive and usually inside a quoted string, so no anchor.
-  printf '%s' "$CMD" | grep -qiE "$re" && emit_ask "Destructive SQL ($name): $CMD"
+  printf '%s' "$CMD" | grep -qiE "$re" && emit_ask "Destructive command ($name): $CMD"
 done
 exit 0

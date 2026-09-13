@@ -17,15 +17,6 @@
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/ts-check.sh", "asyncRewake": true, "timeout": 180 },
-          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/test-on-edit.sh", "asyncRewake": true, "timeout": 180 }
-        ]
-      }
-    ],
     "Stop": [
       {
         "hooks": [
