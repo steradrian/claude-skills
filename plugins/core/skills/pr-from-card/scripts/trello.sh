@@ -118,7 +118,7 @@ import json, sys
 c = json.load(sys.stdin)
 lists = {l["id"]: l["name"] for l in json.loads(sys.argv[1])} if len(sys.argv) > 1 else {}
 print(json.dumps({
-    "id": c["id"], "shortLink": c["shortLink"], "shortUrl": c["shortUrl"],
+    "id": c["id"], "number": c.get("idShort"), "shortLink": c["shortLink"], "shortUrl": c["shortUrl"],
     "name": c["name"], "desc": c.get("desc", ""),
     "list": lists.get(c.get("idList"), c.get("idList")),
     "labels": [l["name"] for l in c.get("labels", [])],
@@ -144,19 +144,19 @@ case "$cmd" in
     require
     lists=$(board_lists)
     if [ -n "${1:-}" ]; then path="/lists/$(list_id "$1")/cards"; else path="/boards/$TRELLO_BOARD/cards"; fi
-    call GET "$path" --get --data-urlencode "fields=name,shortLink,shortUrl,idList,labels" --data-urlencode "members=true" --data-urlencode "member_fields=username" \
+    call GET "$path" --get --data-urlencode "fields=name,idShort,shortLink,shortUrl,idList,labels" --data-urlencode "members=true" --data-urlencode "member_fields=username" \
       | python3 -c '
 import json, sys
 lists = {l["id"]: l["name"] for l in json.loads(sys.argv[1])}
 for c in json.load(sys.stdin):
-    print(json.dumps({"shortLink": c["shortLink"], "shortUrl": c["shortUrl"], "name": c["name"],
+    print(json.dumps({"number": c.get("idShort"), "shortLink": c["shortLink"], "shortUrl": c["shortUrl"], "name": c["name"],
                       "list": lists.get(c["idList"], c["idList"]), "labels": [l["name"] for l in c.get("labels", [])],
                       "members": [m["username"] for m in c.get("members", [])]}, ensure_ascii=False))' "$lists" ;;
   get)
     require
     ref=$(card_ref "${1:?card}")
     lists=$(board_lists)
-    call GET "/cards/$ref" --get --data-urlencode "fields=name,desc,shortLink,shortUrl,idList,labels" \
+    call GET "/cards/$ref" --get --data-urlencode "fields=name,desc,idShort,shortLink,shortUrl,idList,labels" \
       --data-urlencode "members=true" --data-urlencode "member_fields=username" \
       --data-urlencode "checklists=all" --data-urlencode "checklist_fields=name" \
       | print_card "$lists" ;;
