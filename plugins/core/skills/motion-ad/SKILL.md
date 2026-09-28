@@ -172,24 +172,18 @@ Iterate (Phases 5 to 7) until they choose "It's ready".
   mix); code-drawn illustration is stylised, not photoreal; spec-only style packs need extra
   build time on first use.
 
-## Templates (start here when one fits)
+## Templates live with the brand
 
-`templates/` holds proven, data-driven reels for the HTML engine. When a request matches one,
-scaffold a project, copy the template's `scenes.js`, and write only the config (copy, photo slots,
-beats) instead of new scene code. Still run the script stop and the critique on the result.
-- `templates/scrapbook/`: collage reels built from beats (hook · ranked · tickets · note ·
-  polaroids · map · receipt · versus · chat · phone · end). Presets: `top5` ranked countdown,
-  `weekend` plan across days, `secret` insider places, `tonight` map of the evening, `budget`
-  receipt, `thisorthat` engagement rounds, `chat` group-chat → answer. Pick the beats by the *kind
-  of information* (ranking, plan, place, price, choice, problem→answer). Fields in its README. Components:
-  core + collage. Fonts must cover the copy's language (Romanian: Caveat, Courier Prime, Anton,
-  Archivo Black, Playfair italic; Permanent Marker and Special Elite lack ș/ț).
-- `templates/orbit/`: cinematic 3D app reel (phone spins in, dish ring, snap, fly-through,
-  pull-back into the app, floating UI cards). Components: core + refined + uikit.
-
-For a brand with its own ad kit (bearmenu: post-generator `src/ads/`), port the template into
-the kit instead, replacing template UI (uikit cards, drawn phone lists) with the app's real
-components and screens, and dropping any UI for features the app doesn't have.
+This skill ships no brand templates: a proven, data-driven reel belongs to the brand whose copy
+and UI it carries. Keep it next to that brand's work and start there when a request matches one
+(scaffold, copy its `scenes.js`, write only the config; still run the script stop and the
+critique). bearmenu's originals (orbit, scrapbook with 8 presets, descent) are in
+`post-generator/ads-sources/`; their shipped versions are storyboards in post-generator's
+`src/ads/`, ported with the app's real components and screens and without UI for features the
+app doesn't have. Useful generic machinery from them lives here: `collage.js` (scrapbook
+materials), `refined.js` / `uikit.js` (premium type and floating UI for non-app brands),
+`descent.js` (infinite zoom), `vhs.js`. Collage copy in Romanian needs fonts with ș/ț (Caveat,
+Courier Prime, Anton, Archivo Black, Playfair italic; not Permanent Marker or Special Elite).
 
 ## File map
 

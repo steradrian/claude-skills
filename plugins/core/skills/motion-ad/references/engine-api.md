@@ -123,6 +123,14 @@ Worked example: `ads/masa-de-alaturi` in bearmenu-fe (local, not in this skill).
 `frameOn(fx, fy, px, py, k)` (core.js): camera that keeps stage point (fx, fy) at screen point
 (px, py) at scale k; returns `[x, y]` for `tf(s.cam, x, y, rot, k)`.
 
+## Components: descent.js (infinite zoom)
+
+`AD.descent([{el, rect:[x,y,w], extra:[...]}, ..., {el}])` → `{apply(z), at(z)}`. Layers are full W×H boxes
+(`transform-origin: 0 0`), innermost first; append DOM outermost-first so inner layers paint on top. `rect` = where the
+layer's whole frame sits inside the next layer (same aspect). `apply(z)`: z=n → layer n fills the screen; between
+integers the camera zooms in log-scale around the pair's fixed point (no drift). Drive z with `kf()` using holds
+(tiny drift) and moves (~1s, io). Add corner radius to a layer as it becomes a card: `radius = r / k * clamp(z - n)`.
+
 ## Adding components for a new style
 
 Create `scripts/components/<style>.js` in the skill (so every future ad can use it), wrap it in an
