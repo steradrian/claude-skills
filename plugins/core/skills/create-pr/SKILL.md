@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: Generate a comprehensive PR description from the current diff and log, saved under docs/pr/. Use when asked to "create a PR", "write the PR description" or "draft a pull request".
+description: Generate a comprehensive PR description from the current diff and log and open the PR with it — title task-first, body from the repo's template, nothing written into the repo. Use when asked to "create a PR", "write the PR description" or "draft a pull request".
 ---
 
 Generate a comprehensive PR description. If the user's context is too vague, ask clarifying questions before generating.
@@ -47,6 +47,15 @@ Summarize the diff into a structured context:
 
 Then **spawn a `core:pr-writer` agent** with:
 - The context summary
-- Save path: `docs/pr/PR-<ISO-timestamp>-<kebab-slug>.md` (create `docs/pr/` if needed)
+- The repo's `.github/pull_request_template.md` when there is one — the body follows it
+- Save path: a file in the session scratchpad (never under the repo — the PR body is the record, not a `docs/pr/` copy)
 
-Present the generated PR description to the user.
+## Step 4: Title and open
+
+The title puts the task first: **`TASK-<number> <type>(<scope>): <summary>`**, where `<number>` is the Trello card's number, read from the branch name (`<type>/TASK-<number>-<slug>`) or from the card the user names. No card → no prefix, and say so. Then:
+
+```bash
+gh pr create --title "TASK-<number> <type>(<scope>): <summary>" --body-file <scratchpad file>
+```
+
+Present the title and body to the user with the PR link. If a card is known, attach the PR to it (`trello.sh attach`) and move it to review.
