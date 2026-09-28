@@ -1,0 +1,233 @@
+{
+  "title": "BearMenu - Weekendul in Cluj",
+  "aria": "13.4 second vertical BearMenu scrapbook reel: Weekendul in Cluj",
+  "style": "custom",
+  "format": "9:16",
+  "width": 1080,
+  "height": 1920,
+  "duration": 13.4,
+  "fps": 30,
+  "loop": true,
+  "background": "#17130f",
+  "safe_zone": [
+    220,
+    130,
+    400,
+    60
+  ],
+  "components": [
+    "core",
+    "collage"
+  ],
+  "fonts": [
+    {
+      "family": "Anton",
+      "file": "fonts/Anton-Regular.woff2"
+    },
+    {
+      "family": "ArchivoBlack",
+      "file": "fonts/ArchivoBlack-Regular.woff2"
+    },
+    {
+      "family": "PF",
+      "file": "fonts/PlayfairDisplay-Italicwght.woff2",
+      "weight": "400 900",
+      "style": "italic"
+    },
+    {
+      "family": "SG",
+      "file": "fonts/SpaceGroteskwght.woff2",
+      "weight": "300 700"
+    },
+    {
+      "family": "Caveat",
+      "file": "fonts/Caveatwght.woff2",
+      "weight": "400 700"
+    },
+    {
+      "family": "CourierP",
+      "file": "fonts/CourierPrime-Regular.woff2"
+    }
+  ],
+  "palette": {
+    "ink": "#17130f",
+    "paper": "#efe6d6",
+    "red": "#e4472b",
+    "kraft": "#c19a66",
+    "gray": "#b3afa5"
+  },
+  "film": {
+    "grain": 0.42,
+    "grainScale": 2.5,
+    "weave": 0.6,
+    "dust": 0.5,
+    "vignette": 0.34,
+    "leakBase": 0.04,
+    "flicker": 0.03,
+    "leaks": [
+      [
+        2.4,
+        0.55,
+        0.12
+      ]
+    ],
+    "flashes": [],
+    "fadeIn": 0.1,
+    "fadeOut": 0.3
+  },
+  "beats": [],
+  "shots": [
+    {
+      "t": 1.92,
+      "label": "hook"
+    },
+    {
+      "t": 5.12,
+      "label": "tickets"
+    },
+    {
+      "t": 8.04,
+      "label": "polaroids"
+    },
+    {
+      "t": 10.36,
+      "label": "phone"
+    },
+    {
+      "t": 12.88,
+      "label": "end"
+    }
+  ],
+  "audio": null,
+  "theme": {
+    "ink": "#17130f",
+    "paper": "#efe6d6",
+    "accent": "#e4472b",
+    "amber": "#ffb21e",
+    "kraft": "#c19a66",
+    "cream": "#f8f2e7",
+    "note": "#ffe07a",
+    "sage": "#a9bd95"
+  },
+  "images": {
+    "photo01": "assets/photo01.jpg",
+    "photo02": "assets/photo02.jpg",
+    "photo03": "assets/photo03.jpg",
+    "photo04": "assets/photo04.jpg",
+    "photo05": "assets/photo05.jpg",
+    "photo06": "assets/photo06.jpg"
+  },
+  "reel": {
+    "beats": [
+      {
+        "type": "hook",
+        "dur": 2.4,
+        "bg": "paper",
+        "line": "Planul tău pentru",
+        "word": "WEEKEND",
+        "mark": "underline",
+        "sticker": "VIN–<br>DUM",
+        "decor": [
+          "photo04",
+          "photo05"
+        ]
+      },
+      {
+        "type": "tickets",
+        "dur": 3.4,
+        "bg": "kraft",
+        "title": "VINERI → DUMINICĂ",
+        "note": "nu rata!",
+        "items": [
+          {
+            "day": "VIN",
+            "date": "02",
+            "title": "Jazz live",
+            "meta": "21:00 · GHEORGHENI",
+            "color": "#e4472b",
+            "photo": "photo01"
+          },
+          {
+            "day": "SÂM",
+            "date": "03",
+            "title": "Piața de brunch",
+            "meta": "11:00 · CENTRU",
+            "color": "#ffb21e",
+            "photo": "photo02"
+          },
+          {
+            "day": "DUM",
+            "date": "04",
+            "title": "Film în aer liber",
+            "meta": "20:30 · PARC",
+            "color": "#a9bd95",
+            "photo": "photo03"
+          }
+        ]
+      },
+      {
+        "type": "polaroids",
+        "dur": 2.8,
+        "bg": "cream",
+        "line": "și între timp:",
+        "items": [
+          {
+            "photo": "photo04",
+            "caption": "cafea bună"
+          },
+          {
+            "photo": "photo05",
+            "caption": "terasa asta"
+          },
+          {
+            "photo": "photo06",
+            "caption": "cina de sâmbătă"
+          }
+        ]
+      },
+      {
+        "type": "phone",
+        "dur": 2.2,
+        "bg": "news",
+        "title": "Weekendul meu",
+        "subtitle": "6 LOCURI SALVATE",
+        "sticker": "GATA!",
+        "marker": "totul într-un loc",
+        "items": [
+          {
+            "photo": "photo01",
+            "name": "Jazz live",
+            "meta": "VIN · 21:00"
+          },
+          {
+            "photo": "photo02",
+            "name": "Piața de brunch",
+            "meta": "SÂM · 11:00"
+          },
+          {
+            "photo": "photo03",
+            "name": "Film în aer liber",
+            "meta": "DUM · 20:30"
+          },
+          {
+            "photo": "photo04",
+            "name": "Cafea bună",
+            "meta": "CENTRU"
+          },
+          {
+            "photo": "photo06",
+            "name": "Cina de sâmbătă",
+            "meta": "SÂM · 20:00"
+          }
+        ]
+      },
+      {
+        "type": "end",
+        "dur": 2.6,
+        "bg": "kraft",
+        "tagline": "Găsește-ți seara.",
+        "stamp": "CLUJ-NAPOCA"
+      }
+    ]
+  }
+}

@@ -65,5 +65,10 @@
    * scale k. Returns [x, y] for tf(s.cam, x, y, rot, k) (the .cam origin is the stage centre). */
   const frameOn = (fx, fy, px, py, k) => [px - AD.W / 2 - (fx - AD.W / 2) * k, py - AD.H / 2 - (fy - AD.H / 2) * k];
 
-  Object.assign(AD, { frameOn, tex, NOISE, MOTTLE, SPECK, DISTRESS, N, paper, halftone, mask, torn, card, tape, typer, typeTo, split, text });
+  /** true text width in px (unaffected by transforms/clipping), measured with an off-screen probe */
+  function textWidth(el) { const cs = getComputedStyle(el); const m = document.createElement('span'); m.style.cssText = `position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;font-style:${cs.fontStyle};font-weight:${cs.fontWeight};font-size:${cs.fontSize};font-family:${cs.fontFamily};letter-spacing:${cs.letterSpacing}`; m.textContent = el.textContent; document.body.appendChild(m); const w = m.offsetWidth; m.remove(); return w }
+  /** shrink el's font-size so its single line fits maxW. Runs after webfonts load (earlier = wrong metrics). */
+  function fitText(el, maxW) { const run = () => { if (el._fs0 == null) el._fs0 = parseFloat(getComputedStyle(el).fontSize); el.style.fontSize = el._fs0 + 'px'; const w = textWidth(el); if (w > maxW) el.style.fontSize = (el._fs0 * maxW / w * .98).toFixed(2) + 'px' }; document.fonts.ready.then(() => { run(); setTimeout(run, 60) }) }
+
+  Object.assign(AD, { frameOn, textWidth, fitText, tex, NOISE, MOTTLE, SPECK, DISTRESS, N, paper, halftone, mask, torn, card, tape, typer, typeTo, split, text });
 })();
