@@ -131,6 +131,14 @@ layer's whole frame sits inside the next layer (same aspect). `apply(z)`: z=n �
 integers the camera zooms in log-scale around the pair's fixed point (no drift). Drive z with `kf()` using holds
 (tiny drift) and moves (~1s, io). Add corner radius to a layer as it becomes a card: `radius = r / k * clamp(z - n)`.
 
+## Components: reveal.js (trailer / suspense)
+
+- `AD.maskShot(parent, fill)` → shot; `shot.set(type, {open, size, cx, cy, edge, radius, aspect})` with type
+  `slitH | slitV | iris | rect | full | none`. The opening gets glowing light edges; `shot.body` holds the photo
+  (animate its scale for a slow push). Use an open curve: fast out5 in (~30% of the shot), hold, in3 out (~18%).
+- `AD.letterbox(parent, bar)` → `set(p)`; `AD.lightLine(parent)` → `set(p, cy)` for cold opens and the tear-open.
+Rhythm that works: first fragments ~1s, title cards 0.4-0.75s, burst of 4 × 0.27s, 0.3s black, then the reveal.
+
 ## Adding components for a new style
 
 Create `scripts/components/<style>.js` in the skill (so every future ad can use it), wrap it in an
