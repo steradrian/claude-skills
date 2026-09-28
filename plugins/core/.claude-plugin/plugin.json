@@ -1,7 +1,7 @@
 {
   "name": "core",
   "description": "Portable frontend engineering tooling: build/review/QA skills, specialist agents, safety hooks, and a motion-ad video ad generator. Shared across every project and config dir.",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "author": {
     "name": "Adrian"
   }
