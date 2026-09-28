@@ -41,6 +41,15 @@ The first frame must already be interesting (not a fade from black to an empty s
 a provocative line, an extreme close-up, motion already in progress, a sound-less "slam", a
 question. Put the brand name early only if brand recall is the goal.
 
+## Script format (shown to the user in Phase 2)
+
+```
+#  time        what we see                         NARRATION (on-screen VO caption)   other type
+1  0.0-2.2     ...                                 "..."                               ...
+```
+Then: the narration lines alone, in order (the narration test), the style it wants in one line,
+and "Pointers?".
+
 ## Concept card format
 
 ```
@@ -56,7 +65,26 @@ Risk: <the honest weak point>
 After the three cards, pick one (SKILL.md Phase 2): the concept that dramatises the truest product
 truth with the strongest first 1.5 seconds wins over the prettiest. A merge is allowed when one
 card's hook and another's ending are clearly stronger together; write the merged card and say so.
-Only when the user chose "I choose from three" do you present the cards and ask.
+Then write it as a frame-by-frame script and show it to the user before anything is built.
+
+## Narration (the thread viewers follow)
+
+Viewers never connect the dots between frames on their own. Every ad carries a **narration line**:
+one short on-screen sentence per frame (a VO caption, whether or not a voice is added), written so
+that each line follows from the previous one like a friend telling a story. Visuals illustrate the
+narration; they never carry a logical step alone.
+
+- **The narration test:** read only the narration lines, in order, with no visuals. It must tell
+  the whole story and land the product in plain words. If a step is missing, the viewer misses it.
+- **Say the product's job once, literally** ("bearmenu reads the reviews and shows you what to
+  order"). A clever end line cannot replace that sentence; it can only follow it.
+- **Hold for reading:** each line gets 0.5s + words/3 of fully legible time, and never shares the
+  frame with another text block the viewer is expected to read. Text-heavy frames get fewer words,
+  never faster cuts. Cut on the beat AFTER the read time, not on the next beat.
+- **No metaphor the viewer has to decode.** If a frame means something only once you know the
+  concept, rewrite it until it means it on first sight.
+- **Real, recognisable nouns.** Dishes, objects and places the audience names the same way; check
+  a dish name means what you think it means to them (not a regional variant they won't know).
 
 ## Copy rules
 

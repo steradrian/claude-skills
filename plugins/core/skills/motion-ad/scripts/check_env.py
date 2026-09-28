@@ -18,6 +18,7 @@ need(sys.version_info >= (3, 9), f'python >= 3.9 (have {sys.version.split()[0]})
 has_pw = importlib.util.find_spec('playwright') is not None
 need(has_pw, 'playwright (python)', SETUP)
 need(importlib.util.find_spec('PIL') is not None, 'Pillow (contact sheets)', SETUP)
+need(importlib.util.find_spec('numpy') is not None, 'numpy (motion blur, beat detection, sfx)', SETUP)
 need(shutil.which('ffmpeg') is not None, 'ffmpeg (MP4 encode)', 'macOS: brew install ffmpeg   |   Ubuntu: sudo apt install ffmpeg')
 if has_pw:
     if 'PLAYWRIGHT_BROWSERS_PATH' not in os.environ and os.path.isdir('/opt/pw-browsers'):

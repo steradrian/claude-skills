@@ -93,11 +93,35 @@ holds the OFFCUT-only shoe SVG as a model for a project hero).
 - `inkStamp(parent, html, {x, y, w, h, color, size, solid})`: rubber stamp; `solid: true` when it
   lands on printed lines (outline stamps vanish over text).
 - `hl(word, color)` wraps a word in a marker highlight; `highlight(el, p)` wipes it in.
-- `frameOn(fx, fy, px, py, k)` → `[x, y]` for `tf(s.cam, x, y, rot, k)`: keeps stage point (fx, fy)
-  at screen point (px, py) at scale k. Use it for cameras that follow a growing object; keep
-  captions on `s.el` (above the camera), not on `s.cam`, when the camera zooms hard.
+- Cameras that follow a growing object use `AD.frameOn` (core.js, below); keep captions on
+  `s.el` (above the camera), not on `s.cam`, when the camera zooms hard.
 
 Worked example: `ads/masa-de-alaturi` in bearmenu-fe (local, not in this skill).
+
+## Components: device.js (phones with real app screens)
+
+- `phone(parent, {x, y, w, finish, capW, capH, depth, shadow, safeTop, safeBottom})`: a generic
+  modern phone in CSS (silver / graphite / sand), vector-sharp at any zoom, with edge thickness
+  under 3D rotation and a glare that follows the angle. It draws the status bar (9:41, signal,
+  wifi, battery) around the camera pill and the home indicator, and shows app pages in `ph.view`,
+  the safe area below the notch. **Capture pages at the safe viewport, 390 x 751** (844 − 59 − 34),
+  or the app's top bar ends up under the camera pill. `ph.status({bg, fg, bottom, indicator})`
+  matches the bars to the current page. `ph.pose({rx, ry, rz, s, x, y, z})` every frame.
+- Page helpers are in safe-view capture px: `screenPage(ph, src)` (`scrollTo(px)`, clamped to the
+  page end), `screenSheet(ph, src)` (a drawer that slides up; `set(p, scroll)`), `tapAt(ph, x, y)`
+  (a ripple), `screenPoint(ph, px, py, cx, cy)` (stage px, to aim `AD.frameOn` for a dive).
+- `lift(ph, src, box, {hole, radius, scroll})`: an ELEMENT capture (tone pill, review card,
+  highlighted span) placed exactly over its spot inside the phone's 3D rig; `set({z, s, x, y, rx,
+  ry, rz, o, lift})` pops it toward the camera with a growing two-layer shadow and leaves a gap in
+  the page. This is how a highlight is "wrapped": the element itself comes out of the screen,
+  never an outline drawn over a flat screenshot.
+- Motion blur: `ad.config.json` → `"motion_blur": {"samples": 6, "shutter": 0.5, "ranges":
+  [[t0, t1], ...]}` makes render.py average sub-frames across the shutter on fast moves.
+- Captures come from the real app pages with a fictional data layer (bearmenu: `ads/_mock/`);
+  the engine waits for every image to decode before the first frame.
+
+`frameOn(fx, fy, px, py, k)` (core.js): camera that keeps stage point (fx, fy) at screen point
+(px, py) at scale k; returns `[x, y]` for `tf(s.cam, x, y, rot, k)`.
 
 ## Adding components for a new style
 

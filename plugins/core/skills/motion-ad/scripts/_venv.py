@@ -10,7 +10,7 @@ PY = os.path.join(VENV, 'bin', 'python')
 
 
 def ensure():
-    if importlib.util.find_spec('playwright') and importlib.util.find_spec('PIL'):
+    if all(importlib.util.find_spec(m) for m in ('playwright', 'PIL', 'numpy')):
         return
     if os.path.exists(PY) and os.path.realpath(sys.prefix) != os.path.realpath(VENV):
         os.execv(PY, [PY] + sys.argv)

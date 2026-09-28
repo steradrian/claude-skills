@@ -76,9 +76,12 @@ option first, label ending in " (Recommended)". No "Something else" option (Othe
    - Type-only: "No product image; the words do the work. Often the boldest."
    - UI recreated in code: "For apps: real screens rebuilt as animatable layers."
    - My photos (cut-outs): "Most realistic; composited into the style."
-4. **header: "Concept"**
-   - You pick it (Recommended): "I write three concepts, a critic and I choose, runners-up shown at the end."
-   - I choose from three: "One extra stop after concepting, before any build."
+   - Stock photos (Unsplash): "Real food/objects, no faces or recognisable venues; needs an
+     UNSPLASH_ACCESS_KEY (env, or a project's .env.local the user points to)."
+4. **header: "Language"**: the ad's on-screen language (brand file default first). Never assume it
+   from the brand's usual social voice; ask.
+
+(The concept is never a question here: Phase 2 always shows the script frame by frame for pointers.)
 
 ## Call 4 · Only if still open (brand, assets, claims)
 

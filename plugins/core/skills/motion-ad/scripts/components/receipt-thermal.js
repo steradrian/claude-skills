@@ -99,10 +99,6 @@
     s.innerHTML = html; mask(s, AD.DISTRESS, solid ? '1800px' : '900px'); place(s, x, y, w, h); return s;
   }
 
-  /** camera that keeps a paper point framed: maps stage point (fx, fy) to screen (px, py) at scale k.
-   * Returns the tf args [x, y] for a .cam whose transform origin is the stage centre. */
-  const frameOn = (fx, fy, px, py, k) => [px - AD.W / 2 - (fx - AD.W / 2) * k, py - AD.H / 2 - (fy - AD.H / 2) * k];
-
   /** marker highlight behind a word; wrap the word with hl('ragù', color) inside a line's html,
    * then drive highlight(el, p) to wipe it in left to right */
   const hl = (word, color = P.stamp) => `<span class="rc-hl"><i style="background:${color};opacity:.9"></i>${word}</span>`;
@@ -118,5 +114,5 @@
     return { g, body, slot, led };
   }
 
-  Object.assign(AD, { RP: P, roll, feedAt, line, perforation, barcode, inkStamp, hl, highlight, printer, serrated, frameOn });
+  Object.assign(AD, { RP: P, roll, feedAt, line, perforation, barcode, inkStamp, hl, highlight, printer, serrated });
 })();

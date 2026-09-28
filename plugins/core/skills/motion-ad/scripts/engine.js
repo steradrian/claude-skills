@@ -163,7 +163,9 @@ window.AD = (() => {
     window.__prepareCapture = () => { stage.style.transform = 'scale(1)'; stage.style.borderRadius = '0'; document.getElementById('app').classList.add('capture') };
     window.__ready = false;
     const qs = new URLSearchParams(location.search);
-    document.fonts.ready.then(() => {
+    // wait for fonts AND every image (screen captures, photos) so no frame renders a blank screen
+    const images = [...document.images].map(i => i.decode ? i.decode().catch(() => { }) : null);
+    Promise.all([document.fonts.ready, ...images]).then(() => {
       if (qs.has('t')) { setPlaying(false); cur = +qs.get('t') } else setPlaying(true);
       render(cur); window.__ready = true; requestAnimationFrame(loop)
     });

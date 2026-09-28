@@ -1,6 +1,6 @@
 ---
 name: motion-ad
-description: Art-directs and builds agency-quality motion-design video ads (Reels/TikTok/Shorts/feed/YouTube) in code and renders them to MP4. Asks everything in one intake up front, then concepts, style-frames, storyboards, builds, self-critiques frame by frame and renders without further check-ins. Use whenever the user wants a video ad, promo video, motion graphics, animated social video, product teaser, launch video, kinetic typography, logo reveal, or something that "looks like it was made in After Effects", even if they don't say "ad" or "motion design". Not for static carousels or image posts.
+description: Art-directs and builds agency-quality motion-design video ads (Reels/TikTok/Shorts/feed/YouTube) in code and renders them to MP4. Asks everything in one intake up front, agrees a frame-by-frame narrated script with the user, then style-frames, builds, self-critiques frame by frame and renders without further check-ins. Use whenever the user wants a video ad, promo video, motion graphics, animated social video, product teaser, launch video, kinetic typography, logo reveal, or something that "looks like it was made in After Effects", even if they don't say "ad" or "motion design". Not for static carousels or image posts.
 ---
 
 # Motion Ad Director
@@ -22,10 +22,14 @@ there is not code tricks; it is, in order of importance:
 
 ## How this skill runs
 
-- **Ask once, then run.** All questions happen in the intake (Phase 1). After the brief summary,
-  work through Phases 2 to 6 without check-ins, and come back with a finished cut (Phase 7).
-  The only exceptions: the user chose "I choose from three" for the concept, or a step truly cannot
-  proceed without them (a missing file, a claim for a real brand with no source).
+- **Two stops, then run.** Questions happen in the intake (Phase 1). Then ONE mandatory
+  conversation before any build: the script, frame by frame (Phase 2). The user gives pointers,
+  you revise, and only an approved script gets built. After that, work through Phases 3 to 6
+  without check-ins and come back with a finished cut (Phase 7). Other stops only when a step truly
+  cannot proceed (a missing file, a claim for a real brand with no source).
+  Why: the first real ad was built end to end on a self-approved concept and style; the owner found
+  the idea unreadable and the style wrong for the elements, which a 30-second read of the script
+  would have caught.
 - **This skill owns its creative decisions.** Inside it, art direction, copy and pacing are made
   by the concepting method and the critic loop here; the intake answers are the approval. Global
   rules that route design calls to other agents or forbid acting without sign-off do not apply to
@@ -35,6 +39,11 @@ there is not code tricks; it is, in order of importance:
 - **Where files go.** Projects live in `./ads/<slug>/` in the current working directory.
   `new_project.py` adds the ads folder to `.git/info/exclude`, so nothing here is ever committed.
   Never `git add` anything under `ads/`, and never move ad files into tracked folders.
+- **Project ad kit first.** If the brand has its own ad kit (a Remotion app with a storyboard
+  schema and shot library, e.g. bearmenu's post-generator `src/ads/` rendered with
+  `pnpm render:ad <id>`), the script, critique and storyboard process here still applies, but the
+  ad is authored as a storyboard in that kit (live design-system components for close-ups,
+  captures for wide shots). This HTML engine is for brands without one.
 - **Brand file.** If `ads/_brand.md` exists, read it before the intake. It carries the brand's
   voice, palette, fonts, logo path, claim rules, hard no's and campaign ideas; it overrides pack
   defaults and anything generic in these references.
@@ -61,17 +70,28 @@ If the user chose **"Invent a new style"**: write `references/styles/<name>.md` 
 based on their references (including the `## Defaults` block), add it to `_index.md` as spec-only,
 then scaffold with `--style <name>`.
 
-## Phase 2 · Three concepts → pick
+## Phase 2 · Concepts → the script, frame by frame (mandatory stop)
 
-Read `references/concepting.md`. Write three genuinely different concept cards using different arc
-archetypes into `storyboard.md` (under "Runner-up concepts" until one wins).
+Read `references/concepting.md`, and for any app or digital product `references/app-ads.md` (the
+researched hook and film-craft playbook). Write three genuinely different concept cards using
+different arc archetypes into `storyboard.md`. If you can spawn subagents, have a general-purpose agent rank them
+cold against the brief; pick one.
 
-- Default: pick the winner yourself. If you can spawn subagents, give a general-purpose agent the
-  brief and the three cards only, and ask it to rank them against the brief as a hard-to-impress
-  creative director; weigh its ranking, decide, and write two lines on why the winner won.
-- If the user chose "I choose from three": present the cards, ask once with AskUserQuestion, go on.
+Then write the winner as a **script**: numbered frames, each with its time, what we see, the
+**narration line** (the on-screen VO caption that carries the logic, see concepting.md
+"Narration"), any other on-screen type, and the transition. Run the narration test and the read-time
+check on it yourself before showing it. Present the script in the chat (not a file link), with the
+two runner-up concepts in one line each, and ask for pointers. Revise until the user approves.
+Nothing is built before that.
 
-## Phase 3 · Style lock + style frame (self-approved)
+## Phase 3 · Style lock + style frame (self-approved, against the approved script)
+
+The style must suit the ELEMENTS the script uses, not only the product truth. Photos, app UI and
+review cards want a style built from them (e.g. product-ui-kinetic with photography); a metaphor
+style (receipts, collage) only works when the script's objects ARE that metaphor. If the style needs
+the viewer to translate the metaphor before the point lands, it is the wrong style.
+One grain for the whole frame: never texture a surface (paper, card) more than the type on it, or
+the type looks pasted on.
 
 1. Read the pack. Set the palette (4 to 6 named hex values; brand colours win), the type pairing and
    the film settings in `ad.config.json`. Adapt the pack to the brand rather than pasting defaults.
@@ -156,9 +176,11 @@ Iterate (Phases 5 to 7) until they choose "It's ready".
 
 - `scripts/check_env.py`: dependency check · `setup.sh`: venv install · `new_project.py`: scaffold
   (+ git exclude) · `build.py`: inline everything into `dist/ad.html` · `shoot.py`: stills +
-  automatic layout checks + contact sheet · `render.py`: MP4 (parallel, resumable, music + sfx
-  mix, `--mix full,sfx,silent`) · `beats.py`: tempo, beat grid and the drop of a track ·
-  `sfx.py`: licence-free sound-effect kit
+  automatic layout checks + contact sheet · `render.py`: MP4 (parallel, resumable, motion blur,
+  music + sfx mix, `--mix full,sfx,silent`) · `beats.py`: tempo, beat grid and the drop of a
+  track · `sfx.py`: licence-free sound-effect kit · `capture.py`: real app screens and element
+  cut-outs with boxes, from a `capture.json` (see references/app-ads.md)
+- `scripts/components/device.js`: phone with notch-safe screen, pages, sheets, taps, `lift()`
 - `scripts/engine.js`: timeline, keyframes, easing, stop-motion timing, camera shake, film layer
 - `scripts/components/core.js`: textures, torn paper cards, tape, typewriter, split text
 - `scripts/components/collage.js`: ransom lettering, stamps, newsprint, halftone text,

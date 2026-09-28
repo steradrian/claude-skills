@@ -61,5 +61,9 @@
   /** text block helper: absolutely placed div with style */
   function text(parent, str, { x, y, w, h, cls = '', style = {} }) { const d = $('div', 'abs ' + cls, parent, style); d.textContent = str; place(d, x, y, w, h); return d }
 
-  Object.assign(AD, { tex, NOISE, MOTTLE, SPECK, DISTRESS, N, paper, halftone, mask, torn, card, tape, typer, typeTo, split, text });
+  /** camera that keeps a point framed: maps stage point (fx, fy) to screen point (px, py) at
+   * scale k. Returns [x, y] for tf(s.cam, x, y, rot, k) (the .cam origin is the stage centre). */
+  const frameOn = (fx, fy, px, py, k) => [px - AD.W / 2 - (fx - AD.W / 2) * k, py - AD.H / 2 - (fy - AD.H / 2) * k];
+
+  Object.assign(AD, { frameOn, tex, NOISE, MOTTLE, SPECK, DISTRESS, N, paper, halftone, mask, torn, card, tape, typer, typeTo, split, text });
 })();

@@ -27,7 +27,7 @@ async def render_frames(proj, cfg, fps, workers, max_frames):
     n = int(round(T * fps))
     fdir = os.path.join(proj, 'frames'); os.makedirs(fdir, exist_ok=True)
     import hashlib
-    h = hashlib.sha1(open(os.path.join(proj, 'dist', 'ad.html'), 'rb').read()).hexdigest() + f'@{fps}'
+    h = hashlib.sha1(open(os.path.join(proj, 'dist', 'ad.html'), 'rb').read()).hexdigest() + f'@{fps}' + json.dumps(cfg.get('motion_blur'))
     hp = os.path.join(fdir, '.buildhash')
     if os.path.exists(hp) and open(hp).read() != h:
         print('build changed since last render: discarding old frames')
@@ -39,6 +39,13 @@ async def render_frames(proj, cfg, fps, workers, max_frames):
     if not todo:
         return n, 0
     html = 'file://' + os.path.join(proj, 'dist', 'ad.html') + '?t=0'
+    # config "motion_blur": {"samples": 6, "shutter": 0.5, "ranges": [[2.0, 2.8], ...]}; no ranges = everywhere
+    mb = cfg.get('motion_blur') or {}
+    mb_samples, mb_shutter, mb_ranges = int(mb.get('samples', 1)), float(mb.get('shutter', .5)), mb.get('ranges')
+    in_blur = lambda t: not mb_ranges or any(a <= t <= b for a, b in mb_ranges)
+    import io
+    import numpy as np
+    from PIL import Image
     async with async_playwright() as p:
         b = await p.chromium.launch()
 
@@ -50,8 +57,21 @@ async def render_frames(proj, cfg, fps, workers, max_frames):
             loc = pg.locator('#stage')
             mine = todo[idx::workers]
             for k, i in enumerate(mine):
-                await pg.evaluate(f'window.__render({i / fps})')
-                await loc.screenshot(path=os.path.join(fdir, f'{i:05d}.jpg'), type='jpeg', quality=93)
+                t = i / fps
+                out = os.path.join(fdir, f'{i:05d}.jpg')
+                if mb_samples > 1 and in_blur(t):
+                    # motion blur: average sub-frames across the shutter interval, like a film camera
+                    acc = None
+                    for s in range(mb_samples):
+                        ts = t + (s / (mb_samples - 1) - .5) * mb_shutter / fps
+                        await pg.evaluate(f'window.__render({max(0, ts)})')
+                        png = await loc.screenshot(type='png')
+                        arr = np.asarray(Image.open(io.BytesIO(png)).convert('RGB'), dtype=np.float32)
+                        acc = arr if acc is None else acc + arr
+                    Image.fromarray((acc / mb_samples).clip(0, 255).astype(np.uint8)).save(out, quality=93)
+                else:
+                    await pg.evaluate(f'window.__render({t})')
+                    await loc.screenshot(path=out, type='jpeg', quality=93)
                 if idx == 0 and k % 30 == 0:
                     done = n - len([j for j in range(n) if not os.path.exists(os.path.join(fdir, f'{j:05d}.jpg'))])
                     print(f'  frames {done}/{n}', flush=True)
