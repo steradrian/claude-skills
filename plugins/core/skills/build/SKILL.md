@@ -220,8 +220,8 @@ Prepare a **context summary** for the documentation agents:
 
 Then spawn the documentation agents **in parallel in a single message**:
 
-- **`core:ticket-writer`** — always. Pass the full context summary, deviations, review findings, manual-verification outcome. Save to `docs/tickets/Ticket-<ISO-timestamp>-<kebab-slug>.md`
-- **`core:pr-writer`** — only with `--pr` or when the user asks. Pass the context summary + review findings. Save to `docs/pr/PR-<ISO-timestamp>-<kebab-slug>.md`
+- **`core:ticket-writer`** — only when the project's `CLAUDE.md` asks for ticket files (a "Ticket index" section). Otherwise the PR body is the record: skip this agent and pass the same material (deviations, review findings, manual-verification outcome) to the PR writer instead. Where a project does keep tickets, save to `docs/tickets/Ticket-<ISO-timestamp>-<kebab-slug>.md`.
+- **`core:pr-writer`** — with `--pr`, when the user asks, or whenever the ticket writer was skipped. Pass the context summary + review findings. Save to the session scratchpad, never under the repo; the body follows `.github/pull_request_template.md` when there is one, and the title is task-first (`TASK-<number> <type>(<scope>): <summary>`, the number from the branch name).
 - **`core:changelog-writer`** — only with `--changelog` or when the user asks. Pass the user-facing changes from the summary.
 
 Wait for all spawned agents to complete, then proceed to the completion summary.

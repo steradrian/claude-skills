@@ -39,10 +39,10 @@ Trello mode, before any code:
 
 ```bash
 git fetch origin main
-git switch -c <type>/<shortLink>-<slug> origin/main
+git switch -c <type>/TASK-<number>-<slug> origin/main
 ```
 
-`<type>` is `feat`, `fix`, `chore` or `refactor` from the task; `<slug>` is 2-5 kebab words from the title. Never work on `main`.
+`<number>` is the card's number (`number` in `trello.sh get`, the `#62` on the card); `<type>` is `feat`, `fix`, `chore` or `refactor` from the task; `<slug>` is 2-5 kebab words from the title. The number is what ties the card, the branch and the PR together in one search. Offline mode has no number: use `<type>/<slug>`. Never work on `main`.
 
 ## 3. Investigate and implement
 
@@ -54,9 +54,9 @@ Conventional commits, one per logical change, the card URL in the body of the fi
 
 ## 4. Gate, review, document
 
-Invoke `/core:build --finish`. It writes tests, runs typecheck → lint → tests → build, dispatches the independent review, skips manual verification when no browser tool exists (the normal case here), and writes the ticket. Fix every 🔴 it raises; carry 🟡/🔵 into the PR body. Then do whatever else the project's `CLAUDE.md` requires after a change (for example an index row for the ticket) and commit it.
+Invoke `/core:build --finish`. It writes tests, runs typecheck → lint → tests → build, dispatches the independent review and skips manual verification when no browser tool exists (the normal case here). Fix every 🔴 it raises; carry 🟡/🔵 into the PR body. Then do whatever else the project's `CLAUDE.md` requires after a change and commit it.
 
-The card is the task's identity everywhere: the ticket file is `Ticket-<ISO-timestamp>-<shortLink>-<slug>.md`, its header links the card, and the index row's summary starts with `[<shortLink>]`. Offline mode uses `local` in place of the short link.
+The card is the task's identity everywhere: the branch and the PR title carry its number, the PR body links it. Do not write a ticket file unless the project's `CLAUDE.md` still asks for one — the PR body is the record (what was built, decisions taken, deviations, follow-ups as cards).
 
 If a gate step stays red after two fix attempts, keep going: the PR opens as a draft with the failure pasted in the body.
 
@@ -66,13 +66,15 @@ If a gate step stays red after two fix attempts, keep going: the PR opens as a d
 git push -u origin HEAD
 ```
 
-If the push is refused because the environment only accepts `claude/`-prefixed branches, rename with `git branch -m claude/<type>-<shortLink>-<slug>` and push again.
+If the push is refused because the environment only accepts `claude/`-prefixed branches, rename with `git branch -m claude/<type>-TASK-<number>-<slug>` and push again.
 
-Body: follow `.github/pull_request_template.md` when the repo has one, otherwise Summary / Changes / Test plan / Risks. Always include the card link (or "no card: offline mode"), the acceptance criteria as a checklist with the ones you met ticked, "Decisions taken", and the review findings you carried. Title: `<type>: <title> (<shortLink>)`.
+Body: follow `.github/pull_request_template.md` when the repo has one, otherwise Summary / Changes / Test plan / Risks. Always include the card link (or "no card: offline mode"), the acceptance criteria as a checklist with the ones you met ticked, "Decisions taken", and the review findings you carried. Title: **`TASK-<number> <type>(<scope>): <summary>`** — the task first so a card, its branch and its PR are found by one search; then the conventional-commit header. Offline mode drops the prefix.
 
 ```bash
-gh pr create --title "<title>" --body-file <tmp file> [--draft]
+gh pr create --title "TASK-<number> <type>(<scope>): <summary>" --body-file <tmp file> [--draft]
 ```
+
+After the PR is open, attach it to the card and move the card to review: `trello.sh attach <card> <pr url>` and `trello.sh move <card> review`.
 
 `--draft` whenever any gate step is red or a criterion is unmet. If `gh` is missing, push anyway and print the compare URL `https://github.com/<owner>/<repo>/compare/main...<branch>?expand=1` as the fallback.
 
