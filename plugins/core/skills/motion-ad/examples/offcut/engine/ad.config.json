@@ -1,0 +1,92 @@
+{
+  "title": "OFFCUT 01",
+  "aria": "15 second vertical spec ad for OFFCUT 01, a sneaker made from factory scraps",
+  "style": "gritty-collage",
+  "format": "9:16",
+  "width": 1080,
+  "height": 1920,
+  "duration": 15.0,
+  "fps": 30,
+  "loop": true,
+  "ending": "loop",
+  "background": "#141210",
+  "safe_zone": [
+    220,
+    130,
+    400,
+    60
+  ],
+  "components": [
+    "core",
+    "collage",
+    "helpers.js"
+  ],
+  "fonts": [
+    {
+      "family": "Anton",
+      "google": "Anton"
+    },
+    {
+      "family": "ArchivoBlack",
+      "google": "Archivo Black"
+    },
+    {
+      "family": "SpecialElite",
+      "google": "Special Elite"
+    },
+    {
+      "family": "Marker",
+      "google": "Permanent Marker"
+    },
+    {
+      "family": "PF",
+      "google": "Playfair Display",
+      "axes": "ital,wght@0,400..900;1,400..900"
+    }
+  ],
+  "palette": {
+    "ink": "#161310",
+    "paper": "#ece4d3",
+    "red": "#d7301c",
+    "kraft": "#b88d5a",
+    "gray": "#b3afa5",
+    "denim": "#2c3a57"
+  },
+  "film": {
+    "grain": 0.6,
+    "weave": 1,
+    "dust": 1,
+    "flicker": 0.05,
+    "vignette": 0.4,
+    "leakBase": 0.06,
+    "leaks": [
+      [2.45, 0.55, 0.12],
+      [5.28, 0.7, 0.1],
+      [8.45, 0.95, 0.16],
+      [11.5, 0.6, 0.12],
+      [14.8, 1.0, 0.2]
+    ],
+    "flashes": [5.45, 8.55, 9.3, 10.05, 10.8, 12.4],
+    "fadeIn": 0.12,
+    "fadeOut": 0.38
+  },
+  "beats": [],
+  "shots": [
+    { "t": 0.6, "label": "1 They called it (typing)" },
+    { "t": 1.95, "label": "1 WASTE. + marker strike" },
+    { "t": 2.4, "label": "torn sheet wipe" },
+    { "t": 4.7, "label": "2 leftovers, all of it." },
+    { "t": 6.4, "label": "3 shoe assembling" },
+    { "t": 7.45, "label": "3 notes + We called it" },
+    { "t": 8.3, "label": "3 OFFCUT 01 stamp" },
+    { "t": 9.1, "label": "4a 83%" },
+    { "t": 9.85, "label": "4b 0 new leather" },
+    { "t": 10.6, "label": "4c no two pairs alike" },
+    { "t": 11.35, "label": "4d Hand-cut in Porto" },
+    { "t": 12.1, "label": "5 ransom OFFCUT" },
+    { "t": 13.1, "label": "5 logo + shoe + tagline" },
+    { "t": 14.4, "label": "5 end card settled" }
+  ],
+  "assets": {},
+  "audio": null
+}
