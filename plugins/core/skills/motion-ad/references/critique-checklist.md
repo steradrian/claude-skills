@@ -17,6 +17,17 @@ harsh creative director: "fine" is a fail. For every failed item write the fix, 
 - [ ] Nothing important is covered by another element unintentionally.
 - [ ] The hero object's silhouette reads as what it is (not a blob, not the wrong proportions).
 
+## Structure (hard rules: a reel that fails these is not done)
+- [ ] At least 4 visually distinct scenes (different composition, not the same layout with changing data). A "scene" only
+      counts if framing AND what's on screen AND the environment change; the same phone facing camera = one scene.
+- [ ] The product works the way it really works (e.g. an in-app assistant is reached by opening the app, not by @-tagging
+      it in a chat). Ask when unsure.
+- [ ] Real camera travel: pull-back, push-in, pan, whip or zoom-through, not only elements animating in place.
+- [ ] At least one set piece: a moment built to be remembered (flip clock, time-freeze, fly-through, tear-open).
+- [ ] A story with a turn: hook → escalation → turn (a surprise, a stop, a reversal) → payoff → lockup.
+- [ ] UI elements are crafted, not default: real materials (bevels, hinges, layered shadows), designed rings/cards.
+  A list, clock or board changing state is a mechanic, never a whole reel.
+
 ## Across the sequence
 - [ ] The first frame (t=0.2) is already interesting.
 - [ ] The concept's arc is legible from the contact sheet alone, without the storyboard.

@@ -139,6 +139,38 @@ integers the camera zooms in log-scale around the pair's fixed point (no drift).
 - `AD.letterbox(parent, bar)` → `set(p)`; `AD.lightLine(parent)` → `set(p, cy)` for cold opens and the tear-open.
 Rhythm that works: first fragments ~1s, title cards 0.4-0.75s, burst of 4 × 0.27s, 0.3s black, then the reveal.
 
+## Components: flap.js (split-flap board)
+
+`AD.flapTile(parent, {x, y, w, h, size, font, color, r})` → tile with real mechanics (two static halves + two
+moving flaps, hinge, shading); `tile.set(prev, next, p, colour)`. `AD.flapRow(tiles, [[t0, 'TEXT', colour], ...], t,
+{seed, start, dur, stagger, cycle})` drives a row; changed characters cycle through random flips before settling.
+Needs a monospace webfont with the copy's diacritics (JetBrains Mono as `JB`).
+
+## Components: uikit.js (floating UI for non-app-capture brands)
+
+Theme with `ad.config.json` → `"ui": {"accent", "ink", "paper", "muted", "sans", "mono", "serif"}`.
+- `AD.icon(name, size, color, stroke)` → SVG string (consistent 2px rounded stroke set).
+- `AD.glass('light'|'dark', {blur})` → layered surface style (inner highlight, hairline, two-level shadow).
+- `AD.ui.dateTile / mapCard / availability / social / toast / chip / iconButton / statusBar`.
+Rules that made the difference vs. generic pills: every floating card is a small *component* with its own
+information shape (calendar block, map + route, segmented bar, avatar stack); cards emerge from the matching spot
+on the phone screen (spring from `from` → final), counter-rotate slightly against the phone, and never cover
+the element being interacted with. Avoid backdrop-filter inside 3D rings (use `blur: 0` + a darker fill).
+When the brand has a real app, capture its screens (device.js) instead of drawing UI it doesn't have.
+
+## Photo slots
+
+`ad.config.json` → `"images": {"photo01": "assets/photo01.jpg"}`. `build.py` embeds existing files as data URLs in
+`AD.C.images[slot]`; missing files are `null`, so scenes should render a marked placeholder and the build prints
+which slots are empty. Keep photos ~1500px on the long edge.
+
+## 3D camera work (cinematic styles)
+
+Put a `perspective` container in `s.cam`, a `transformStyle: 'preserve-3d'` world inside it, and move the *world*
+(`translate3d(0, y, camZ) rotateX() rotateY()`) as the camera. Never set `opacity < 1` or `filter` on a preserve-3d
+element (it flattens the 3D); apply them to leaf faces or to the perspective container. Phones get thickness from
+~10 stacked slices in Z; cards need a front and a back face with `backfaceVisibility: 'hidden'`.
+
 ## Adding components for a new style
 
 Create `scripts/components/<style>.js` in the skill (so every future ad can use it), wrap it in an

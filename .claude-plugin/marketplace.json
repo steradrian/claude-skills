@@ -16,6 +16,13 @@
       "source": "./plugins/website-audit",
       "description": "Multi-specialist website audits for Romanian small businesses: technical SEO, local, content, performance, accessibility, compliance, conversion.",
       "defaultEnabled": false
+    },
+    {
+      "name": "film-studio",
+      "displayName": "Film Studio",
+      "source": "./plugins/film-studio",
+      "description": "Cinematic films rendered in code (photoreal 3D, stylized 3D, 2D motion) with synthesized sound, a director and a frames-only critic.",
+      "defaultEnabled": false
     }
   ]
 }

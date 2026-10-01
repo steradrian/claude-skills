@@ -1,0 +1,9 @@
+{
+  "name": "film-studio",
+  "displayName": "Film Studio",
+  "version": "1.0.0",
+  "description": "Direct, build, review and export cinematic films rendered in code: product reveals, brand films and UI explainers in photoreal 3D, stylized 3D or 2D motion, with synthesized sound.",
+  "author": { "name": "Adrian" },
+  "license": "MIT",
+  "keywords": ["video", "motion", "three.js", "webgl", "animation", "product-film", "explainer"]
+}

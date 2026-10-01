@@ -1,0 +1,5 @@
+node_modules/
+stills/
+review/
+export/
+.DS_Store

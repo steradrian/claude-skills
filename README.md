@@ -8,7 +8,10 @@ Claude Code plugin marketplace. `core` holds the portable engineering tooling th
 claude plugin marketplace add steradrian/claude-skills
 claude plugin install core@adrian
 claude plugin install website-audit@adrian   # optional
+claude plugin install film-studio@adrian     # optional
 ```
+
+`film-studio` makes cinematic films in code (three.js + Web Audio → MP4): `/film-studio:make-film`, the `film-director` and `film-critic` agents, the `film` CLI and three verified starters. `examples/ember/` is the film it was extracted from. See `plugins/film-studio/README.md`. For short performance ads use `/core:motion-ad`; for a cinematic reveal or brand film use film-studio.
 
 Everything is namespaced: `/core:build`, `/core:review`, `/core:edge-bash`; agents show as `core:pr-reviewer`. The audit suite is `/website-audit:audit-deep` and `/website-audit:audit-scan`.
 

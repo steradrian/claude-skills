@@ -177,12 +177,14 @@ Iterate (Phases 5 to 7) until they choose "It's ready".
 This skill ships no brand templates: a proven, data-driven reel belongs to the brand whose copy
 and UI it carries. Keep it next to that brand's work and start there when a request matches one
 (scaffold, copy its `scenes.js`, write only the config; still run the script stop and the
-critique). bearmenu's originals (orbit, scrapbook with 8 presets, descent) are in
-`post-generator/ads-sources/`; their shipped versions are storyboards in post-generator's
-`src/ads/`, ported with the app's real components and screens and without UI for features the
-app doesn't have. Useful generic machinery from them lives here: `collage.js` (scrapbook
-materials), `refined.js` / `uikit.js` (premium type and floating UI for non-app brands),
-`descent.js` (infinite zoom), `vhs.js`. Collage copy in Romanian needs fonts with ș/ț (Caveat,
+critique). bearmenu's originals (orbit, scrapbook with 8 presets, descent, reveal, reveal-hidden,
+countdown, bruno) are in `post-generator/ads-sources/`; their shipped versions are storyboards in
+post-generator's `src/ads/`, ported with the app's real components and screens and without UI for
+features the app doesn't have. Useful generic machinery from them lives here: `collage.js`
+(scrapbook materials), `refined.js` / `uikit.js` (premium type and floating UI for non-app
+brands), `descent.js` (infinite zoom), `reveal.js` (trailer slits, irises, title cards),
+`flap.js` (split-flap board), `vhs.js`. For a cinematic 3D reveal or brand film rather than a
+performance ad, use the `film-studio` plugin (`/film-studio:make-film`). Collage copy in Romanian needs fonts with ș/ț (Caveat,
 Courier Prime, Anton, Archivo Black, Playfair italic; not Permanent Marker or Special Elite).
 
 ## File map
@@ -200,6 +202,8 @@ Courier Prime, Anton, Archivo Black, Playfair italic; not Permanent Marker or Sp
   misregistered print, marker strokes, torn wipe, outlined background words
 - `scripts/components/receipt-thermal.js`: printer, upward paper feed, receipt lines, stamps,
   marker highlights, `frameOn` camera
+- `scripts/components/refined.js` / `uikit.js`: premium type and floating UI · `descent.js`:
+  infinite zoom · `reveal.js`: trailer suspense · `flap.js`: split-flap tiles · `vhs.js`: tape look
 - `references/`: interview, concepting, storyboard, craft rules, critique checklist, engine API,
   `styles/` packs · `agents/critic.md` · `examples/offcut/`: the full 15s reference ad;
   `engine/` is the canonical engine-API project to imitate, `reference.html` the pre-engine original

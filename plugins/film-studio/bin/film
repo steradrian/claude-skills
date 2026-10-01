@@ -1,0 +1,64 @@
+#!/usr/bin/env node
+// film — Film Studio command line. On PATH while the plugin is enabled.
+//   film new <dir> [--look photoreal|stylized|motion2d] [--format 9:16|16:9|1:1|4:5] [--title "Name"]
+//   film doctor                      check Node, Chromium and ffmpeg for the current project
+//   film update-engine [dir]         refresh engine/ and tools/ from this plugin (your src/ is untouched)
+//   film build|dev|stills|review|export [...]   run the project's tool in the current directory
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync, realpathSync } from 'node:fs';
+import { join, dirname, resolve, basename } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+
+const KIT = join(dirname(realpathSync(fileURLToPath(import.meta.url))), '..', 'kit');
+const [cmd, ...rest] = process.argv.slice(2);
+const flag = (n, d) => { const i = rest.indexOf('--' + n); return i === -1 ? d : rest[i + 1]; };
+const LOOKS = ['photoreal', 'stylized', 'motion2d'];
+const run = (c, a, cwd = process.cwd()) => spawnSync(c, a, { stdio: 'inherit', cwd, shell: process.platform === 'win32' }).status ?? 1;
+
+function copyEngine(dir) {
+  cpSync(join(KIT, 'engine'), join(dir, 'engine'), { recursive: true });
+  cpSync(join(KIT, 'project', 'tools'), join(dir, 'tools'), { recursive: true });
+  for (const f of ['build.mjs', 'dev.mjs']) cpSync(join(KIT, 'project', f), join(dir, f));
+}
+
+if (cmd === 'new') {
+  const dir = resolve(rest.find((a, i) => !a.startsWith('--') && !(rest[i - 1] || '').startsWith('--')) || 'film');
+  const look = flag('look', 'photoreal'), format = flag('format', null), title = flag('title', null);
+  if (!LOOKS.includes(look)) { console.error(`Unknown look "${look}". Choose: ${LOOKS.join(', ')}`); process.exit(1); }
+  if (existsSync(join(dir, 'src'))) { console.error(`${dir} already has a src/ folder. Pick an empty directory.`); process.exit(1); }
+  mkdirSync(join(dir, 'src'), { recursive: true });
+  copyEngine(dir);
+  cpSync(join(KIT, 'project', 'package.json'), join(dir, 'package.json'));
+  cpSync(join(KIT, 'project', '.gitignore'), join(dir, '.gitignore'));
+  const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')); pkg.name = basename(dir).toLowerCase().replace(/[^a-z0-9-]/g, '-'); writeFileSync(join(dir, 'package.json'), JSON.stringify(pkg, null, 2) + '\n');
+  let film = readFileSync(join(KIT, 'templates', look, 'film.js'), 'utf8');
+  if (format) film = film.replace(/format:\s*'[^']+'/, `format: '${format}'`);
+  if (title) film = film.replace(/title:\s*'[^']+'/, `title: '${title.replace(/'/g, "\\'")}'`);
+  writeFileSync(join(dir, 'src', 'film.js'), film);
+  console.log(`Created ${dir} from the ${look} starter${format ? ` (${format})` : ''}.\nNext:\n  cd ${dir}\n  npm install && npm run setup\n  npm run review      # renders the starter so you see the baseline before changing anything\n  npm run dev         # http://localhost:5173`);
+  if (format && format !== '9:16') console.log(`Note: the starter was framed for 9:16. Reframe cameras and text for ${format} and review before building on it.`);
+} else if (cmd === 'update-engine') {
+  const dir = resolve(rest[0] || '.');
+  if (!existsSync(join(dir, 'src'))) { console.error('Run this in a film project (a folder with src/).'); process.exit(1); }
+  copyEngine(dir); console.log('engine/ and tools/ refreshed. Run npm run review to confirm nothing changed that you did not expect.');
+} else if (cmd === 'doctor') {
+  const ok = (b, m, fix) => console.log(`${b ? 'ok  ' : 'MISSING'}  ${m}${b ? '' : `\n         ${fix}`}`);
+  const major = Number(process.versions.node.split('.')[0]);
+  ok(major >= 18, `Node ${process.versions.node}`, 'Install Node 18 or newer.');
+  const inProject = existsSync('src') && existsSync('engine');
+  ok(inProject, 'Inside a film project', 'cd into the folder created by `film new`.');
+  if (inProject) {
+    ok(existsSync('node_modules/playwright'), 'playwright installed', 'npm install');
+    ok(existsSync('node_modules/three/build/three.min.js'), 'three.js installed (offline renders)', 'npm install');
+    let chromium = false;
+    try { const pw = await import(resolve('node_modules/playwright/index.mjs')); chromium = existsSync(pw.chromium.executablePath()); } catch { /* not installed */ }
+    ok(chromium, 'Headless Chromium for stills, review and export', 'npm run setup');
+  }
+  const ff = spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' });
+  ok(!ff.error && ff.status === 0, 'ffmpeg (for MP4 export)', 'brew install ffmpeg');
+} else if (['build', 'dev', 'stills', 'review', 'export'].includes(cmd)) {
+  if (!existsSync('package.json')) { console.error('Run this inside a film project.'); process.exit(1); }
+  process.exit(run('npm', ['run', cmd, '--', ...rest]));
+} else {
+  console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1, 7).map((l) => l.replace(/^\/\/ ?/, '')).join('\n'));
+}

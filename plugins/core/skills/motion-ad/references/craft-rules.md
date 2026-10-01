@@ -3,6 +3,18 @@
 These are what separate an art-directed ad from "elements fading in". Most are cheap to do and
 obvious in the result. Style packs may override specific rules; everything else applies.
 
+## Elegance (read this first; hard-won feedback from the bearmenu builds)
+
+What made reels read as "amateur/childish", and the fix:
+- Everything moving at once, several ideas per second → one move at a time, holds of 0.6–1.2s, 7 scenes over 15s.
+- Springs/overshoot on UI and text → slow precise easing (io / out3, 0.5–1s). Bounce only for physical objects.
+- Text sliding off-screen, bubbles flying away → exits are dissolves (opacity + blur), or the element turns into the
+  next thing (a notification expands into the chat). Nothing leaves the frame unmotivated.
+- Rainbow gradients, shimmer text, teddy mascots, pastel blobs → warm neutrals + one accent, monochrome marks.
+- Loud type (ultra condensed/heavy, many sizes) → one family, a strict scale (e.g. 150/64/44/30/24/20), grid alignment.
+- UI floating in space for a messaging story → put it in a real device and move the camera around the device.
+- Judge the style on stills first (style frames), then animate.
+
 ## Composition
 
 - **Fill the frame.** Nearly every "amateur" frame has too much empty space. Scale hero elements
@@ -24,6 +36,9 @@ obvious in the result. Style packs may override specific rules; everything else 
   transitions or setTimeout. That's what makes scrubbing and MP4 rendering exact.
 - **Anticipate, overshoot, settle.** Entrances use `out5` / `back`; exits use `in3`. Linear only
   for drifts and constant camera moves.
+- **Register decides energy.** For professional/premium brands: no camera shake, no bounce/back easing, no
+  boil. Use masked line reveals, blur-in, hairlines drawing, slow push-ins and precise `expo`/`out5` moves
+  (`components/refined.js`). Shake and slams below are for bold/playful/ironic registers only.
 - **Slams**: scale 2.2 to 2.8 → 1 in 0.10 to 0.18s with `in3` or `back`, plus `AD.kick(t, 8-16)`
   exactly at the landing frame. The shake sells the weight.
 - **Mixed frame rates** (hand-made styles): animate objects on twos with `AD.q12(lt)`, keep the

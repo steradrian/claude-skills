@@ -1,0 +1,19 @@
+{
+  "name": "film",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node dev.mjs",
+    "stills": "node tools/stills.mjs",
+    "review": "node tools/review.mjs",
+    "export": "node tools/export.mjs",
+    "setup": "npx playwright install chromium"
+  },
+  "devDependencies": {
+    "@fontsource/instrument-sans": "^5.0.0",
+    "playwright": "^1.56.0",
+    "three": "0.159.0"
+  }
+}
