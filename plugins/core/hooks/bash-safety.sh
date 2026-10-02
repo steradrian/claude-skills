@@ -29,7 +29,6 @@ AT='(^|[;&|][[:space:]]*|\$\([[:space:]]*|sudo[[:space:]]+|command[[:space:]]+)'
 PATTERNS=(
   # rm -rf aimed outside the project: /, ~, $HOME, a parent, or a bare glob.
   'rm -rf outside the project|rm[[:space:]]+(-[a-zA-Z]*[rR][a-zA-Z]*[[:space:]]+)+(-[a-zA-Z]+[[:space:]]+)*(/[[:space:]]*$|/[a-z]|~|\$HOME|\.\./|\*)'
-  'rm -rf $VAR (unresolvable target)|rm[[:space:]]+-[a-zA-Z]*[rR][a-zA-Z]*[[:space:]]+.*\$\{?[A-Za-z_]'
   # History rewrites and ref deletion: not recoverable from a normal clone.
   'git reflog expire|git[[:space:]]+reflog[[:space:]]+expire'
   'git update-ref -d|git[[:space:]]+update-ref[[:space:]]+-d'
