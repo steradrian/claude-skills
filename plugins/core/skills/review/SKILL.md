@@ -1,6 +1,6 @@
 ---
 name: review
-description: Comprehensive pre-PR code review with parallel batch agents. Triggers on "review this PR", "review my changes", "check my implementation". Dispatches core:pr-reviewer per file batch, then merges every finding into one report.
+description: Comprehensive pre-PR code review. Triggers on "review this PR", "review my changes", "check my implementation". Dispatches one core:pr-reviewer per logical change (at most 4), then merges the findings into one report.
 disable-model-invocation: false
 allowed-tools: Read, Glob, Grep, Agent, Bash
 ---
@@ -45,11 +45,12 @@ agent prompt — subagents do not inherit your shell variables.
 > **ISOLATION & PARALLELIZATION REQUIREMENT:**
 > This review MUST run in clean-slate subagents. Session history, prior fixes, and previous review runs must never influence the output. Each invocation must see only the current git diff.
 >
-> **Parallel dispatch strategy (based on diff size):**
-> 1. Run `git diff $MERGE_BASE...HEAD --name-only` to get the changed file list. Count the files.
-> 2. **≤ 12 changed files:** Split into **3 agents** (divide files roughly equally, ~4 files each). Keep related files together — e.g., a component + its types + its hook should go to the same agent.
-> 3. **> 12 changed files:** Split into **1 agent per 3 files** (e.g., 30 files → 10 agents). Same grouping rule: keep related files in the same batch.
-> 4. Spawn all batch agents **as background tasks** in a single message (multiple Agent tool calls). For each Agent call, set:
+> **Dispatch strategy (batch by logical change, not by file count):**
+> 1. Run `git diff $MERGE_BASE...HEAD --name-only` and `git log $MERGE_BASE...HEAD --oneline`. Drop files nobody reviews by hand: lockfiles, generated code (OpenAPI types, codegen output), snapshots, binary assets. Mention them in the report as skipped.
+> 2. Group the remaining files by **logical change**: a commit or feature, or a module with its types, hooks and tests. A reviewer must see a whole change, never a slice of one.
+> 3. **One logical change, or ≤ 15 files:** dispatch **one** agent with every file. No merge agent: tell it to also run the chain-of-verification and skepticism passes from step 7 on its own findings before writing the report.
+> 4. **Several logical changes:** one agent per change, **at most 4**. With more than 4 changes, fold the smallest related ones together.
+> 5. Spawn all batch agents **as background tasks** in a single message (multiple Agent tool calls). For each Agent call, set:
 >    - `name`: `"review-batch-1"`, `"review-batch-2"`, etc.
 >    - `subagent_type`: `"core:pr-reviewer"` — routes each batch to the specialized review agent
 >    - `run_in_background`: `true` — this is what makes them run concurrently
@@ -61,15 +62,15 @@ agent prompt — subagents do not inherit your shell variables.
 >    - Instruct each agent to also run the linter on its own file batch.
 >    - The **Reviewer brief** section of this file, pasted verbatim, plus the resolved `$MERGE_BASE` value.
 >    Note: paste the Reviewer brief as-is. Do NOT paraphrase it, summarise it, or restate `core:pr-reviewer`'s own built-in review dimensions, two-gate filter and multi-pass logic on top of it — the agent already has those; duplicating them in your own words is what makes batches disagree.
-> 5. **Wait for all background agents to complete.** You will be automatically notified as each finishes — do NOT poll or sleep. Do NOT proceed until all batch agents have returned their results.
-> 6. After all batch agents complete, spawn **one final general-purpose Agent** (foreground, `run_in_background: false`) named `"review-merge"` as the **merge agent**. Pass it all batch results concatenated and instruct it to:
+> 6. **Wait for all background agents to complete.** You will be automatically notified as each finishes — do NOT poll or sleep. Do NOT proceed until all batch agents have returned their results.
+> 7. **Only when more than one batch ran**, spawn **one final general-purpose Agent** (foreground, `run_in_background: false`, `model: "opus"`) named `"review-merge"` as the **merge agent**. Pass it all batch results concatenated and instruct it to:
 >    - Deduplicate findings (same file:line reported by overlapping batches)
 >    - **Verify each finding (chain-of-verification):** For every finding, trace the concrete execution path that triggers it. State the preconditions. If you cannot construct a realistic trigger scenario, discard the finding — it is speculative.
 >    - **Skepticism pass:** For each surviving finding, ask: "If I remove this from the report, would the PR actually be worse off?" Discard any finding where the answer is "no" or "uncertain."
 >    - Renumber findings sequentially
 >    - Run the **architectural coherence pass (Step 4 of the Reviewer brief)** across ALL findings — this is the only step that requires cross-file holistic view and cannot be parallelized; paste that step's text into the merge agent's prompt too
 >    - Produce the final unified report in the output format specified below
-> 7. Return the merge agent's output verbatim to the user.
+> 8. Return the merge agent's output (or the single batch agent's report) verbatim to the user.
 >
 > NEVER use SendMessage to continue a prior review agent — always call Agent fresh. NEVER work through the Reviewer brief yourself in the current conversation: your job is O1 (resolve the diff), O2 (batch and dispatch), and the merge. The reviewing happens in the agents.
 
