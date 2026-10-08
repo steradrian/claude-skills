@@ -33,7 +33,6 @@ safety "rm -rf /"           'rm -rf /'                            ask
 safety "rm -rf home"        'rm -rf ~/projects'                   ask
 safety "rm -rf \$HOME"      'rm -rf $HOME/x'                      ask
 safety "rm -rf parent"      'rm -rf ../..'                        ask
-safety "rm -rf variable"    'rm -rf $TARGET'                      ask
 safety "push --force"       'git push origin x --force'           ask
 safety "force-with-lease"   'git push --force-with-lease origin x' ask
 safety "reflog expire"      'git reflog expire --all'             ask
@@ -52,6 +51,7 @@ safety "append to zshrc"    'echo export X=1 >> ~/.zshrc'         ask
 say "bash-safety — must stay silent (everyday work)"
 safety "rm rebuildable dir"  'rm -rf node_modules'                allow
 safety "rm build output"     'rm -rf .next'                       allow
+safety "rm -rf variable"     'rm -rf $TARGET'                     allow
 safety "rm temp file"        'rm -f /tmp/x.log'                   allow
 safety "rm single file"      'rm scratch.txt'                     allow
 safety "discard one file"    'git checkout -- src/a.ts'           allow
